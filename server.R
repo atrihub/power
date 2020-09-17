@@ -734,7 +734,7 @@ shinyServer(
     observeEvent(input$matrixMMRM, {
       if(input$matrixMMRM %in% c("exchangeable")){
         shinyjs::enable("rhoMMRM")
-        shinyjs::disable("lambdaMMRM")
+        shinyjs::enable("lambdaMMRM")
         #shinyjs::enable("Rmatrix")
       }else if(input$matrixMMRM %in% c("ar1")){
         shinyjs::enable("rhoMMRM")
@@ -742,7 +742,7 @@ shinyServer(
         #shinyjs::enable("RaExMMRM")
       } else if(input$matrixMMRM %in% c("general")){
         shinyjs::disable("rhoMMRM")
-        shinyjs::disable("lambdaMMRM")
+        shinyjs::enable("lambdaMMRM")
         }
     })
     
@@ -758,12 +758,14 @@ shinyServer(
           if(input$estimateMMRM %in% c("delta")){
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
                             sigmab = input$sigmabMMRM,
+                            lambda =input$lambdaMMRM,
                             delta =input$deltaMMRM, power =power[i],
                             sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           } else {
             delta<-input$betaMMRM*input$pct.changeMMRM
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
                             sigmab = input$sigmabMMRM,
+                            lambda =input$lambdaMMRM,
                             delta =delta, power =power[i],
                             sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           }
@@ -781,12 +783,14 @@ shinyServer(
           if(input$estimateMMRM %in% c("delta")){
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
                             sigmab = input$sigmabMMRM,
+                            lambda =input$lambdaMMRM,
                             delta =input$deltaMMRM, N =n[i],
                             sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           } else {
             delta<-input$betaMMRM*input$pct.changeMMRM
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
                             sigmab = input$sigmabMMRM,
+                            lambda =input$lambdaMMRM,
                             delta =delta,N =n[i],
                             sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           }
@@ -804,12 +808,14 @@ shinyServer(
           if(input$estimateMMRM %in% c("delta")){
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
                             sigmab = input$sigmabMMRM,
+                            lambda =input$lambdaMMRM,
                             delta =input$deltaMMRM, power =power[i],
                             sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           } else {
             delta<-input$betaMMRM*input$pct.changeMMRM
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
                             sigmab = input$sigmabMMRM,
+                            lambda =input$lambdaMMRM,
                             delta =delta, power =power[i],
                             sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           }
@@ -827,12 +833,14 @@ shinyServer(
           if(input$estimateMMRM %in% c("delta")){
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
                             sigmab = input$sigmabMMRM,
+                            lambda =input$lambdaMMRM,
                             delta =input$deltaMMRM, N =n[i],
                             sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           } else {
             delta<-input$betaMMRM*input$pct.changeMMRM
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
                             sigmab = input$sigmabMMRM,
+                            lambda =input$lambdaMMRM,
                             delta =delta, N =n[i],
                             sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           }
