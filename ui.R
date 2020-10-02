@@ -17,7 +17,7 @@ loadingHelper <- function() {
 
 
 shinyUI(dashboardPage(skin = 'blue',
-    dashboardHeader(title=h4("Power and Sample Size for Longitudinal Study Designs", align='left'), 
+    dashboardHeader(title="Power and Sample Size for Longitudinal Study Designs", 
                     titleWidth = 350),
     dashboardSidebar(
       shinyjs::useShinyjs(),
