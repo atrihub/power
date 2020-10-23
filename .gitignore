@@ -1,2 +1,6 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
 ADNIMERGE.rdata
 deployApp.R
