@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6630 64-bit) (preloaded format=pdflatex 2018.3.11)  24 SEP 2020 13:42
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6630 64-bit) (preloaded format=pdflatex 2018.3.11)  23 OCT 2020 14:01
 entering extended mode
 **./Manuscript-Draft.tex
 (Manuscript-Draft.tex
@@ -311,9 +311,20 @@ Overfull \vbox (6.83331pt too high) has occurred while \output is active []
 
 
 [2]
-Missing character: There is no â in font cmr10!
-Missing character: There is no € in font cmr10!
-Missing character: There is no “ in font cmr10!
+
+Package natbib Warning: Citation `Hedeker_Gibbons_ Waternaux (1999)' on page 3 
+undefined on input line 57.
+
+Missing character: There is no Ã in font cmr10!
+Missing character: There is no ± in font cmr10!
+
+Package natbib Warning: Citation `Basagana_Liao_ Spiegelman(2013)' on page 3 un
+defined on input line 59.
+
+
+Package natbib Warning: Citation `Rochon(1991) ' on page 3 undefined on input l
+ine 59.
+
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
@@ -329,51 +340,114 @@ Overfull \vbox (6.83331pt too high) has occurred while \output is active []
 
 
 [4]
+
+Package natbib Warning: Citation `Mallinckrodt_etal(2003)' on page 5 undefined 
+on input line 78.
+
+
+Package natbib Warning: Citation `Lane(2008)' on page 5 undefined on input line
+ 78.
+
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
+
+Package natbib Warning: Citation `Diggle_etal(1994)' on page 5 undefined on inp
+ut line 85.
+
+
+Overfull \vbox (6.94444pt too high) has occurred while \output is active []
+
+
+[5]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+Overfull \vbox (6.83331pt too high) has occurred while \output is active []
+
+
+[6] (Manuscript-Draft.bbl
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
 Overfull \vbox (6.94444pt too high) has occurred while \output is active []
 
 
-[5] (Manuscript-Draft.bbl
+[7]
+Missing character: There is no Ã in font cmcsc10!
+Missing character: There is no ± in font cmcsc10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
 
-Package natbib Warning: Empty `thebibliography' environment on input line 3.
+Overfull \vbox (6.83331pt too high) has occurred while \output is active []
 
+
+[8]
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no “ in font cmr10!
 ) 
 AED: lastpage setting LastPage
 
 Overfull \vbox (6.83331pt too high) has occurred while \output is active []
 
 
-[6] (Manuscript-Draft.aux)
+[9]
+
+Package natbib Warning: There were undefined citations.
+
+(Manuscript-Draft.aux)
 
 LaTeX Font Warning: Size substitutions with differences
 (Font)              up to 1.75pt have occurred.
 
  ) 
 Here is how much of TeX's memory you used:
- 2835 strings out of 493305
- 35233 string characters out of 3138874
- 101882 words of memory out of 3000000
- 6365 multiletter control sequences out of 15000+200000
- 12449 words of font info for 50 fonts, out of 3000000 for 9000
+ 2897 strings out of 493305
+ 36794 string characters out of 3138874
+ 102130 words of memory out of 3000000
+ 6426 multiletter control sequences out of 15000+200000
+ 12757 words of font info for 51 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 34i,13n,28p,1985b,270s stack positions out of 5000i,500n,10000p,200000b,50000s
-<C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Pr
-ogram Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx9.pfb><C:/Program Fil
-es/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Program Files/MiKT
-eX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKTeX 2.9/fo
-nts/type1/public/amsfonts/cm/cmr6.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/
-public/amsfonts/cm/cmr7.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/ams
-fonts/cm/cmr8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/c
-mr9.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy6.pfb><
-C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Progra
-m Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Program Files/
-MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmti9.pfb><C:/Program Files/MiKTeX 2.
-9/fonts/type1/public/amsfonts/cm/cmtt8.pfb>
-Output written on Manuscript-Draft.pdf (6 pages, 181625 bytes).
+ 34i,13n,28p,1985b,271s stack positions out of 5000i,500n,10000p,200000b,50000s
+<C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Pr
+ogram Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Fi
+les/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx9.pfb><C:/Program Files/MiKTe
+X 2.9/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Program Files/MiKTeX 2.9/f
+onts/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type
+1/public/amsfonts/cm/cmr6.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/a
+msfonts/cm/cmr7.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm
+/cmr8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr9.pfb>
+<C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy6.pfb><C:/Progr
+am Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Program Files/
+MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Program Files/MiKTeX 2
+.9/fonts/type1/public/amsfonts/cm/cmti9.pfb><C:/Program Files/MiKTeX 2.9/fonts/
+type1/public/amsfonts/cm/cmtt8.pfb>
+Output written on Manuscript-Draft.pdf (9 pages, 205171 bytes).
 PDF statistics:
- 73 PDF objects out of 1000 (max. 8388607)
+ 88 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
