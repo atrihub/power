@@ -3,6 +3,7 @@
 
 \usepackage{subfigure, enumitem}
 \usepackage{url}
+\usepackage{mdframed}
 
 % Add history information for the article if required
 \history{Received August 1, 2010;
@@ -15,7 +16,7 @@
 	\title{Power and sample size for longitudinal data: the ``longpower" R package and app}
 	
 	% List of authors, with corresponding author marked by asterisk
-	\author{SAMUEL IDDI$^1$, MICHAEL C. DONOHUE$^{1\ast}$\\[4pt]
+	\author{SAMUEL IDDI$^1$, MICHAEL C. DONOHUE$^{2\ast}$\\[4pt]
 		for the Alzheimer's Disease Neuroimaging Initiative$^\dagger$\\[4pt]
 		% Author addresses
 		\textit{$^1$ Data Measurement and Evaluation Unit,
@@ -54,9 +55,9 @@ Longitudinal designs are generally preferred over cross-sectional research desig
 Determining the right sample size for a study is not a straightforward task. Despite the plethora of sample size formulas for repeated measures (\cite{Overall_Doyle(1994),Lui(1992),Rochon(1991), Guo_etal(2013)}), cluster repeated measures (\cite{Liu_Shih_Gehan(2002)}), multivariate repeated measures (\cite{Vonesh_Schork(1986),Guo_Johnson(1996)}), longitudinal research designs (\cite{Lefante(1990)}), the tasks of gathering the necessary inputs and getting the right software to carry out the computation are challenging to many. Investment in such efforts is not what many non-technical researchers desire to embark on. Commonly, the easiest route taken by most research is to use sample size formulas for very basic cross-sectional studies and adjust for design effect due to repeated measures. Although such approaches are valid, the best approach is the use of formulas derived directly from models for longitudinal or repeated measures to align with planned data analysis and yielding greater statistical power. 
 Several factors need to be considered before choosing the right sample size formulas that increase the statistical power of a study. \cite{Guo_etal(2013)} describe practical methods for the selection of appropriate sample size for repeated measures addressing issues of missing data, and the inclusion of more than one covariates to control for differences in response at baseline. 
 	
-Sample size formulas are refined depending on the specific situation and design features. For example, \cite{Hedeker_Gibbons_ Waternaux (1999)} considered a sample size for longitudinal design comparing two groups that accounted for subject attrition or drop-out. \cite{Basagana_Liao_Spiegelman(2013)} derived sample size formulas for continuous longitudinal data with time-varying exposure variables typical of observational studies. Ignoring time-varying exposure was demonstrated to lead to substantial overestimation of the minimum required sample size which can be economically disadvantageous. In non-traditional longitudinal designs such as designs for mediation analysis of the longitudinal study, further refinements to sample size formulas are needed to ensure that sufficient sample sizes are obtained for conducting mediation analysis (\cite{Pan_etal(2018)}). 
+Sample size formulas are refined depending on the specific situation and design features. For example, \cite{Hedeker_Gibbons_Waternaux(1999)} considered a sample size for longitudinal design comparing two groups that accounted for subject attrition or drop-out. \cite{Basagana_Liao_Spiegelman(2011)} derived sample size formulas for continuous longitudinal data with time-varying exposure variables typical of observational studies. Ignoring time-varying exposure was demonstrated to lead to substantial overestimation of the minimum required sample size which can be economically disadvantageous. In non-traditional longitudinal designs such as designs for mediation analysis of the longitudinal study, further refinements to sample size formulas are needed to ensure that sufficient sample sizes are obtained for conducting mediation analysis (\cite{Pan_etal(2018)}). 
 	
-Extension to basic sample size formulae usually requires additional parameters such as exposure mean, variance, and intraclass correlations (\cite{Basagana_Liao_ Spiegelman(2013)}), mediation effect, number of repeated measures  (\cite{Pan_etal(2018)}), covariance structures (\cite{Rochon(1991) }), non-linear trends (\cite{Yan_Su(2006)}), missing, attrition or dropout rates (\cite{Roy_etal(2007), Lu_Luo_Chen(2008)}), among others.  
+Extension to basic sample size formulae usually requires additional parameters such as exposure mean, variance, and intraclass correlations (\cite{Basagana_Liao_Spiegelman(2011)}), mediation effect, number of repeated measures  (\cite{Pan_etal(2018)}), covariance structures (\cite{Rochon(1991)}), non-linear trends (\cite{Yan_Su(2006)}), missing, attrition or dropout rates (\cite{Roy_etal(2007), Lu_Luo_Chen(2008)}), among others.  
 	
 Advanced sample size methods simultaneously handle several practical issues associated with research design and complications that may arise during data collection. However, such methods are only available in commercial software. 
 
@@ -75,24 +76,55 @@ One of the most common sample size computation approaches for correlated data is
 
 \subsection{Sample size computation based on the mixed model for repeated measures (MMRM)}
 \label{model2}
-An alternative sample size computation method used in many areas of application including AD trials is that based on the mixed model for repeated measures (MMRM \cite{Mallinckrodt_etal(2001),Mallinckrodt_etal(2003),Lane(2008)}. The MMRM method of model fitting is similar to the mixed-effect model for longitudinal or repeated measures except for the unstructured modelling of time – treated as a categorical variable, and the specification of a within-subject error structure. Additionally, the MMRM considers the interaction between time and treatment. 
+An alternative sample size computation method used in many areas of application including AD trials is that based on the mixed model for repeated measures (MMRM; \cite{Mallinckrodt_etal(2001),Mallinckrodt_etal(2003),Lane(2008)}. The MMRM method of model fitting is similar to the mixed-effect model for longitudinal or repeated measures except for the unstructured modelling of time – treated as a categorical variable, and the specification of a within-subject error structure. Additionally, the MMRM considers the interaction between time and treatment. 
 
 \subsection{The 'longpower' package}
 \label{model3}
 
 \subsection{A Web-based App}
 \label{model4}
-This Shiny app dashboard is developed to easily generate sample size and conduct power analysis for a longitudinal study design with two-group comparisons for a continuous outcome. The App implements the sample size formula of \cite{Liu_Liang(1997)} and \cite{Diggle_etal(1994)} using functions developed for the R `longpower' package. The `longpower' package handles cases where time is treated either as continuous or categorical. The former approach uses the linear mixed model with random intercept and slope while the later leads to the well-known Mixed Model of Repeated Measures (MMRM) used in many clinical trial applications for conducting statistical analysis. 
+This Shiny app dashboard is developed to easily generate sample size and conduct power analysis for a longitudinal study design with two-group comparisons for a continuous outcome. The App implements the sample size formula of \cite{Liu_Liang(1997)} and \cite{Diggle_Liang_Zeger(1994),Diggle_etal(2002)} using functions developed for the R `longpower' package. The `longpower' package handles cases where time is treated either as continuous or categorical. The former approach uses the linear mixed model with random intercept and slope while the later leads to the well-known Mixed Model of Repeated Measures (MMRM) used in many clinical trial applications for conducting statistical analysis. 
 
-The dashboard is in two parts. The first part accepts user inputs to generate sample size when time is treated as both categorical and continuous. Thus, this part assumes that the user already has pilot parameter estimates including effect size and known variance. Users can generate sample sizes and perform power analysis using different sample size methods (diggle, liuliang, and edland). The basic inputs of the App include an option for whether sample size or power is desired, a slider for sample size and power enabled when appropriate and difference in means (treatment effect) estimate. Additional options include the type I error rate, type of test (one/two sided), estimates of random effect variances, sample size computation method, allocation ratio and time intervals. For the MMRM method, options for the association structure and retention in each group is enable depending on the association structure assumed by the user. 
+The dashboard is in two parts. The first part accepts user inputs to generate sample size when time is treated as both categorical and continuous. Thus, this part assumes that the user already has pilot parameter estimates including effect size and known variance. Users can generate sample sizes and perform power analysis using different sample size methods (\texttt{diggle, liuliang}, and \texttt{edland}). The basic inputs of the App include an option for whether sample size or power is desired, a slider for sample size and power enabled when appropriate and difference in means (treatment effect) estimate. Additional options include the type I error rate, type of test (one/two sided), estimates of random effect variances, sample size computation method, allocation ratio and time intervals. For the MMRM method, options for the association structure and retention in each group is enable depending on the association structure assumed by the user. 
 
 The second part of the dashboard uses the methodology that is similar to the first part except that Alzheimer's Disease Neuroimaging Initiative (ADNI)-based pilot parameters are generated based on user-selected inclusion and exclusion criteria, primary outcome, duration of the study, and covariate options to be included in the linear mixed and MMRM models. 
 
 The App interface display plots of power against sample size over range of values, and text summary of imputed and selected estimates. For the ADNI-based generator, additional summary estimates from fitted model and descriptive summary of baseline participants characteristics are also dynamically generated.
 
 
-\section{Motivating examples}
+\section{Illustrative examples}
 \label{sec3}
+To illustrate how sample size/power can be obtained using the 'longpower' package and the web app, we discuss two illustrative examples. 
+\subsection{Hypothetical clinical trial}
+We consider the hypothetical clinical trial example discussed in \cite{Diggle_etal(2002)}. Suppose that we are interested in testing the effect of a new treatment in reducing blood pressure through a clinical trial. The investigator is interested in randomizing subjects between a control and active treatment group to have equal size. Three visits are envisaged 
+with assessments planned at years 0, 2, and 5. Suppose that the within-subject variance is given by and assuming an error rate of 0.05, power of 80\% and smallest meaningful difference of 0.5 mmHg/year, we want to determine the number of subjects needed
+for both treated and control groups for varying correlation (0.2, 0.5 and 0.8) and response variance (100, 200, 300).
+
+
+\begin{mdframed}
+\begin{verbatim}
+n = 3
+t = c(0,2,5)
+rho = c(0.2, 0.5, 0.8)
+sigma2 = c(100, 200, 300)
+tab = outer(rho, sigma2,
+Vectorize(function(rho, sigma2){
+ceiling(diggle.linear.power(
+delta=0.5,
+t=t,
+sigma2=sigma2,
+R=rho,
+alternative="one.sided",
+power = 0.80)$n)}))
+colnames(tab) = paste("sigma2 =", sigma2)
+rownames(tab) = paste("rho =", rho)
+tab
+\end{verbatim}
+\end{mdframed}
+
+\subsection{Alzheimer's Disease Neuroimaging Initiative (ADNI)}
+ADNI is a population-based longitudinal cohort study that follows study participants to collect data on their clinical, cognitive, imaging including MRI and PET images, genetic, and biochemical biomarkers. The study was designed to discover, optimize, standardize, and validate clinical trial measures and biomarkers that are used in AD clinical research. This multi-site longitudinal study, runs at about 63 sites in the US and Canada and began in 2004. 
+All the data generated from the ADNI study are entered into a data repository hosted at the Laboratory of Neuroimaging (LONI) at the University of Southern California, the LONI Image \& Data Archive (IDA). The data can be freely accessed upon request. Apart from the many utility of the data for advancing knowledge for AD trial, this big data resource can be used to improve study design. In particular, the data is used to generate pilot estimates for the computation of sample size and power analysis.
 
 \section{Discussion}
 \label{sec4}
