@@ -3,26 +3,16 @@ library(shinyWidgets)
 library(plotly)
 library(parallel)
 library(DT)
-# library(HI)
-# library(randomForest)
-# library(rstantools)
 library(colorspace)
 library(googleVis)
 library(longpower)
 library(Hmisc)
-# library(ADNIMERGE)
 load("./ADNIMERGE.rdata")
 library(lme4)
 library(nlme)
 library(arsenal)
 library(dplyr)
 library(foreign)
-
-# library(flexdashboard)
-# library(mudata2)
-
-
-
 
 #------------------ Parameters ------------------
 # Set colors
