@@ -42,9 +42,7 @@ adnimerge<-adnimerge[!duplicated(paste(adnimerge$RID, adnimerge$Years.bl)),]
 
 shinyServer(
   function(input, output, session){
-    shinyalert("Disclaimer!", "This App is to be used for research or educational purposes only. We have attempted to ensure that
-               the outputs generated are accurate and reliable. However, any action you take 
-               based on information from this App without independently them will be at your own risk.",
+    shinyalert("Disclaimer!", "This free software service is provided with ABSOLUTELY NO WARRANTY.",
                type = "warning",closeOnClickOutside=T, confirmButtonText = "I accept")
     
     
