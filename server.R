@@ -7,45 +7,43 @@ library(colorspace)
 library(googleVis)
 library(longpower)
 library(Hmisc)
-load("./ADNIMERGE.rdata")
 library(lme4)
 library(nlme)
 library(arsenal)
 library(dplyr)
 library(foreign)
 
-#------------------ Parameters ------------------
-# Set colors
+# To update data ----
+# adnimerge <- ADNIMERGE::adnimerge
+# save(adnimerge, file="ADNIMERGE.rdata")
+load("./ADNIMERGE.rdata")
+
+
+# Parameters ----
+## Set colors ----
 # https://www.w3.org/TR/css-color-3/#svg-color
 confirmed_color <- "purple"
 active_color <- "blue" # #1f77b4"
 recovered_color <- "green"
 death_color <- "red"
 
-adnimerge$ABETA.bl[adnimerge$ABETA.bl == ">1700"]<-"1700"
-adnimerge$ABETA.bl[adnimerge$ABETA.bl == "<200"]<-"200"
-adnimerge$TAU.bl[adnimerge$TAU.bl== ">1300"]<-"1300"
-adnimerge$TAU.bl[adnimerge$TAU.bl == "<80"]<-"80"
-adnimerge$TAU.bl<-as.numeric(adnimerge$TAU.bl)
-adnimerge$ABETA.bl<-as.numeric(adnimerge$ABETA.bl)
-adnimerge<-adnimerge[!duplicated(paste(adnimerge$RID, adnimerge$Years.bl)),]
+csf2numeric <- function(x){
+  as.numeric(gsub('>', '', gsub('<', '', x)))
+}
 
+adnimerge <- adnimerge %>%
+  mutate(across(c(ABETA.bl, TAU.bl), csf2numeric)) %>%
+  filter(!duplicated(paste(RID, Years.bl))) %>%
+  filter(Years.bl <= 5.25)
+
+# shinyServer ----
 shinyServer(
   function(input, output, session){
     shinyalert("Disclaimer!", "This free software service is provided with ABSOLUTELY NO WARRANTY.",
-               type = "warning",closeOnClickOutside=T, confirmButtonText = "I accept")
+               type = "warning", closeOnClickOutside=T, confirmButtonText = "I accept")
     
-    
-    # output$R <- renderUI({
-    #   size<-length(seq(input$startTime, input$entTime, by=input$timeStep))
-    #   M <- matrix(0,nrow=size, ncol = size, dimnames = list(paste0('t',1:size),paste0('t',1:size)))
-    #   matrixInput(inputId = "Rmatrix",value = M, rows = list(names = T),
-    #              cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric')
-    #   #gvisTable(as.data.frame(diag(size)))
-    # 
-    # })
-    
-     observeEvent(input$analysisType, {
+    ## Power/Sample size switch ----
+    observeEvent(input$analysisType, {
       if(input$analysisType %in% c("Sample size")){
         shinyjs::enable("power")
         shinyjs::disable("sampleSize")
@@ -54,7 +52,8 @@ shinyServer(
         shinyjs::disable("power")
       }
     })
-     
+    
+    ## correlation matrix (R) ----
      observeEvent(input$matrix, {
        size<-length(seq(input$startTime, input$entTime, by=input$timeStep))
        M <- matrix(0,nrow=size, ncol = size, dimnames = list(paste0('t',1:size),paste0('t',1:size)))
@@ -64,7 +63,7 @@ shinyServer(
          where="afterEnd",
          ui=tags$div(id="R",tags$b("Pilot estimate of a marginal model working correlation matrix (R)"),
                      matrixInput(inputId = "Rmatrix",value = M, rows = list(names = T),
-                        cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                        cols = list(names = T), class = 'numeric'))
        )
        }else{
            removeUI(
@@ -108,8 +107,8 @@ shinyServer(
     # })
     
     
-    #### Outputs ##############
-    ### Diggle ###
+    ## Outputs ----
+    ### Diggle ----
     R<-reactive({
       #cov.s.i <- #0.8*sqrt(input$sig2.i)*sqrt(input$sig2.s)
       cov.t <- function(t1, t2, sig2.i, sig2.s, cov.s.i){
@@ -406,35 +405,35 @@ shinyServer(
           where="afterEnd",
           ui=tags$div(id="RaExMMRM",tags$b("Working correlation matrix (Ra)"),
                       matrixInput(inputId = "RamatrixMMRM",value = M, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#raMMRM",
           where="afterEnd",
           ui=tags$div(id="raExMMRM",tags$b("Retention in group a (ra)"),
                       matrixInput(inputId = "ramatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#RbMMRM",
           where="afterEnd",
           ui=tags$div(id="RbExMMRM",tags$b("Working correlation matrix (Rb)"),
                       matrixInput(inputId = "RbmatrixMMRM",value = M, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#rbMMRM",
           where="afterEnd",
           ui=tags$div(id="rbExMMRM",tags$b("Retention in group b (rb)"),
                       matrixInput(inputId = "rbmatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         # insertUI(
         #   selector = "#lambdaMMRM",
         #   where="afterEnd",
         #   ui=tags$div(id="lambdaExMMRM",tags$b("Allocation ratio(lambda)"),
         #               matrixInput(inputId = "lambdaVecMMRM",value = t(m2), rows = list(names = T),
-        #                           cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+        #                           cols = list(names = T), class = 'numeric'))
         # )
       }else if(input$matrixMMRM %in% c("general")){
         M <- matrix(0,nrow=size(), ncol = size(), dimnames = list(paste0('t',1:size()),paste0('t',1:size())))
@@ -461,35 +460,35 @@ shinyServer(
           where="afterEnd",
           ui=tags$div(id="RaExMMRM",tags$b("Working correlation matrix (Ra)"),
                       matrixInput(inputId = "RamatrixMMRM",value = M, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#raMMRM",
           where="afterEnd",
           ui=tags$div(id="raExMMRM",tags$b("Retention in group a (ra)"),
                       matrixInput(inputId = "ramatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#RbMMRM",
           where="afterEnd",
           ui=tags$div(id="RbExMMRM",tags$b("Working correlation matrix (Rb)"),
                       matrixInput(inputId = "RbmatrixMMRM",value = M, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#rbMMRM",
           where="afterEnd",
           ui=tags$div(id="rbExMMRM",tags$b("Retention in group b (rb)"),
                       matrixInput(inputId = "rbmatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         # insertUI(
         #   selector = "#lambdaMMRM",
         #   where="afterEnd",
         #   ui=tags$div(id="lambdaExMMRM",tags$b("Allocation ratio(lambda)"),
         #               matrixInput(inputId = "lambdaVecMMRM",value = t(m2), rows = list(names = T),
-        #                           cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+        #                           cols = list(names = T), class = 'numeric'))
         # )
       }else{
         m2 <- matrix(0,nrow=size()*2, ncol = 1, dimnames = list(paste0('t',1:(size()*2)),NULL))
@@ -513,21 +512,21 @@ shinyServer(
           where="afterEnd",
           ui=tags$div(id="raExMMRM",tags$b("Retention in group a (ra)"),
                       matrixInput(inputId = "ramatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#rbMMRM",
           where="afterEnd",
           ui=tags$div(id="rbExMMRM",tags$b("Retention in group b (rb)"),
                       matrixInput(inputId = "rbmatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         # insertUI(
         #   selector = "#lambdaMMRM",
         #   where="afterEnd",
         #   ui=tags$div(id="lambdaExMMRM",tags$b("Allocation ratio(lambda)"),
         #               matrixInput(inputId = "lambdaVecMMRM",value = t(m2), rows = list(names = T),
-        #                           cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+        #                           cols = list(names = T), class = 'numeric'))
         # )
         
         # removeUI(
@@ -576,35 +575,35 @@ shinyServer(
           where="afterEnd",
           ui=tags$div(id="RaExMMRM",tags$b("Working correlation matrix (Ra)"),
                       matrixInput(inputId = "RamatrixMMRM",value = M, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#raMMRM",
           where="afterEnd",
           ui=tags$div(id="raExMMRM",tags$b("Retention in group a (ra)"),
                       matrixInput(inputId = "ramatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#RbMMRM",
           where="afterEnd",
           ui=tags$div(id="RbExMMRM",tags$b("Working correlation matrix (Rb)"),
                       matrixInput(inputId = "RbmatrixMMRM",value = M, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#rbMMRM",
           where="afterEnd",
           ui=tags$div(id="rbExMMRM",tags$b("Retention in group b (rb)"),
                       matrixInput(inputId = "rbmatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         # insertUI(
         #   selector = "#lambdaMMRM",
         #   where="afterEnd",
         #   ui=tags$div(id="lambdaExMMRM",tags$b("Allocation ratio(lambda)"),
         #               matrixInput(inputId = "lambdaVecMMRM",value = t(m2), rows = list(names = T),
-        #                           cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+        #                           cols = list(names = T), class = 'numeric'))
         # )
       }else if(input$matrixMMRM %in% c("general")){
         M <- matrix(0,nrow=size(), ncol = size(), dimnames = list(paste0('t',1:size()),paste0('t',1:size())))
@@ -631,35 +630,35 @@ shinyServer(
           where="afterEnd",
           ui=tags$div(id="RaExMMRM",tags$b("Working correlation matrix (Ra)"),
                       matrixInput(inputId = "RamatrixMMRM",value = M, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#raMMRM",
           where="afterEnd",
           ui=tags$div(id="raExMMRM",tags$b("Retention in group a (ra)"),
                       matrixInput(inputId = "ramatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#RbMMRM",
           where="afterEnd",
           ui=tags$div(id="RbExMMRM",tags$b("Working correlation matrix (Rb)"),
                       matrixInput(inputId = "RbmatrixMMRM",value = M, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#rbMMRM",
           where="afterEnd",
           ui=tags$div(id="rbExMMRM",tags$b("Retention in group b (rb)"),
                       matrixInput(inputId = "rbmatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         # insertUI(
         #   selector = "#lambdaMMRM",
         #   where="afterEnd",
         #   ui=tags$div(id="lambdaExMMRM",tags$b("Allocation ratio(lambda)"),
         #               matrixInput(inputId = "lambdaVecMMRM",value = t(m2), rows = list(names = T),
-        #                           cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+        #                           cols = list(names = T), class = 'numeric'))
         # )
       }else{
         m2 <- matrix(0,nrow=size()*2, ncol = 1, dimnames = list(paste0('t',1:(size()*2)),NULL))
@@ -683,21 +682,21 @@ shinyServer(
           where="afterEnd",
           ui=tags$div(id="raExMMRM",tags$b("Retention in group a (ra)"),
                       matrixInput(inputId = "ramatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         insertUI(
           selector = "#rbMMRM",
           where="afterEnd",
           ui=tags$div(id="rbExMMRM",tags$b("Retention in group b (rb)"),
                       matrixInput(inputId = "rbmatrixMMRM",value = m, rows = list(names = T),
-                                  cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+                                  cols = list(names = T), class = 'numeric'))
         )
         # insertUI(
         #   selector = "#lambdaMMRM",
         #   where="afterEnd",
         #   ui=tags$div(id="lambdaExMMRM",tags$b("Allocation ratio(lambda)"),
         #               matrixInput(inputId = "lambdaVecMMRM",value = t(m2), rows = list(names = T),
-        #                           cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+        #                           cols = list(names = T), class = 'numeric'))
         # )
         
         # removeUI(
@@ -1522,7 +1521,7 @@ shinyServer(
     #   where="afterEnd",
     #   ui=tags$div(id="raExADNIMMRM",tags$b("Retention in group A (ra)"),
     #               matrixInput(inputId = "ramatrixADNIMMRM",value = m, rows = list(names = T),
-    #                           cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric'))
+    #                           cols = list(names = T), class = 'numeric'))
     # )
     ###################### Output (MMRM) ###############
     subdataMMRM<-reactive({
