@@ -1007,7 +1007,7 @@ shinyServer(
     
     output$selectTimeInterval<-renderUI({
       a<-adnimerge$Years.bl
-      sliderInput("timeInterval", label = "Select time interval", min = 0, 
+      sliderInput("timeInterval", label = "Select study duration", min = 0, 
         max = ceiling(max(a, na.rm = T)), value = c(0, ceiling(max(a, na.rm = T))))
     })
     
@@ -1208,7 +1208,7 @@ shinyServer(
     
     ############### Baseline summaries ################
     observeEvent(input$summaryby,{
-      output$baselineSummary<-renderPrint({
+      output$baselineSummary<-renderTable({
         dat<-subdata() %>%
           arrange(Years.bl)
         a<-as.character(input$criteria)[-1]
@@ -1239,8 +1239,8 @@ shinyServer(
           numeric.stats = c("N","Nmiss","range","meansd", "medianq1q3"),
           cat.stats = c("N","Nmiss", "countpct"),
           digits=1)
-        summary(tbl, text=T)
-      })
+        as.data.frame(summary(tbl, text = "html"))
+      }, sanitize.text.function = function(x) x)
     })
     
     output$indPlot<-renderPlotly({
@@ -1435,7 +1435,7 @@ shinyServer(
     output$selectTimeIntervalMMRM<-renderUI({
       a<-adnimerge$Years.bl
       #a<-unique(as.numeric(a))
-      sliderInput("timeIntervalMMRM", label = "Select time interval", min = 0, 
+      sliderInput("timeIntervalMMRM", label = "Select study duration", min = 0, 
         max = ceiling(max(a, na.rm = T)), value = c(0, ceiling(max(a, na.rm = T))))
     })
     
@@ -1620,7 +1620,7 @@ shinyServer(
     
     ############### Baseline summaries ################
     observeEvent(input$summarybyMMRM,{
-      output$baselineSummaryMMRM<-renderPrint({
+      output$baselineSummaryMMRM<-renderTable({
         dat<-subdataMMRM() %>%
           arrange(Years.bl)
         a<-as.character(input$criteriaMMRM)[-1]
@@ -1650,8 +1650,8 @@ shinyServer(
           numeric.stats = c("N","Nmiss","range","meansd", "medianq1q3"),
           cat.stats = c("N","Nmiss", "countpct"),
           digits=1)
-        summary(tbl, text=T)
-      })
+        as.data.frame(summary(tbl, text = "html"))
+      }, sanitize.text.function = function(x) x)
     })
     #### model fitting 
     modelFitMMRM<-reactive({

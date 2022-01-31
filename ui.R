@@ -247,7 +247,7 @@ shinyUI(dashboardPage(skin = 'blue',
                 inline = T))
             ),
             fluidRow(
-              column(12, verbatimTextOutput("baselineSummary"))
+              column(12, tableOutput("baselineSummary"))
             )
           ),
           box(status = 'danger', title='Covariate Options', solidHeader = T,width = 5,
@@ -324,15 +324,6 @@ shinyUI(dashboardPage(skin = 'blue',
                   selected_header = "You have selected:"
                 )),
                 actionButton("submitCriteriaMMRM","Submit selected criteria"))
-              # column(6, multiInput(inputId = "covariatesMMRM", "Covariate options", choices = c("","Gender"="PTGENDER","Education"="PTEDUCAT",
-              #                                                                               "Ethnicity"="PTETHCAT", "APOE4"="APOE4","Race"="PTRACCAT"),
-              #                      selected = c("","Gender"="PTGENDER","Education"="PTEDUCAT",
-              #                                   "Ethnicity"="PTETHCAT", "APOE4"="APOE4","Race"="PTRACCAT"), options = list(
-              #                                     enable_search = T,
-              #                                     non_selected_header = "Choose to select:",
-              #                                     selected_header = "You have selected:"
-              #                                   )),
-              #        actionButton("submitCovariatesMMRM","Submit selected covariates"))
             )  
           )
         ),
@@ -367,7 +358,7 @@ shinyUI(dashboardPage(skin = 'blue',
                 inline = T))
             ),
             fluidRow(
-              column(12, verbatimTextOutput("baselineSummaryMMRM"))
+              column(12, tableOutput("baselineSummaryMMRM"))
             )
           ),
           box(status = 'danger', title='Covariate Options', solidHeader = T,width = 5,
