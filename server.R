@@ -33,7 +33,6 @@ csf2numeric <- function(x){
 
 adnimerge <- adnimerge %>%
   mutate(across(c(ABETA.bl, TAU.bl), csf2numeric)) %>%
-  filter(!duplicated(paste(RID, Years.bl))) %>%
   filter(Years.bl <= 5.25)
 
 # shinyServer ----
@@ -91,23 +90,8 @@ shinyServer(
         shinyjs::disable("edlandAllocation")
       }
     })
-    
-    # observeEvent(input$matrix, {
-    #   if(input$matrix %in% c("correlation")){
-    #     shinyjs::disable("sig2.i")
-    #     shinyjs::disable("sig2.s")
-    #     shinyjs::disable("cov.s.i")
-    #     #shinyjs::enable("Rmatrix")
-    #   }else{
-    #     shinyjs::enable("sig2.i")
-    #     shinyjs::enable("sig2.s")
-    #     shinyjs::enable("cov.s.i")
-    #     #shinyjs::disable("Rmatrix")
-    #   }
-    # })
-    
-    
-    ## Outputs ----
+
+    ## Linear model ----
     ### Diggle ----
     R<-reactive({
       #cov.s.i <- #0.8*sqrt(input$sig2.i)*sqrt(input$sig2.s)
@@ -166,8 +150,9 @@ shinyServer(
         plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
           layout(title=paste0("Power analysis using (",input$method,") method"), 
             xaxis=list(title="Sample size per group"), yaxis=list(title="Power"))
-        
+      
       }else if(input$analysisType %in% c("Sample size") & #input$matrix %in% c("covariance") &
+          ### Edland Power ----
           input$method %in% c("edland")){
         t = seq(input$startTime,input$entTime,input$timeStep)
         power<-seq(input$power[1],input$power[2],0.01)
@@ -192,6 +177,7 @@ shinyServer(
             xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
         
       }else if(input$analysisType %in% c("Power") & #input$matrix %in% c("covariance") &
+          ### Edland SS ----
           input$method %in% c("edland")){
         t = seq(input$startTime,input$entTime,input$timeStep)
         n<-seq(input$sampleSize[1],input$sampleSize[2],1)
@@ -219,6 +205,7 @@ shinyServer(
             xaxis=list(title="Sample size, group 1"), yaxis=list(title="Power"))
         
       }else if(input$analysisType %in% c("Sample size") & #input$matrix %in% c("covariance") & 
+          ### Liu, Liang Power ----
           input$method %in% c("liuliang")){
         t = seq(input$startTime,input$entTime,input$timeStep)
         n = length(t)
@@ -247,6 +234,7 @@ shinyServer(
             xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
         
       }else if(input$analysisType %in% c("Power") & #input$matrix %in% c("covariance") & 
+          ### Liu, Liang SS ----
           input$method %in% c("liuliang")){
         t = seq(input$startTime,input$entTime,input$timeStep)
         n = length(t)
@@ -278,6 +266,7 @@ shinyServer(
       
     })
     
+    ### Describe method ----
     output$describeMethod<-renderText({
       if(input$analysisType %in% c("Sample size") & #input$matrix %in% c("covariance") &
           input$method %in% c("diggle")){
@@ -294,26 +283,27 @@ shinyServer(
       }
     })
     
+    ### Summary selection ----
     output$summarySelection<-renderTable({
       if(input$estimate %in% c("delta")){
         if(input$method %in% c("edland")){
-          a<-data.frame(Summary=c("Sample size method:","Type of test:","Type I error:","Placebo effect:",
+          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo effect:",
             "Change in the estimate of the parameter of interest:", "Allocation ratio"),
             Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, input$delta,
               input$edlandAllocation))) 
         }else{
-          a<-data.frame(Summary=c("Sample size method:","Type of test:","Type I error:","Placebo effect:",
+          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo effect:",
             "Change in the estimate of the parameter of interest:"),
             Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, input$delta)))
         }
       } else{
         if(input$method %in% c("edland")){
-          a<-data.frame(Summary=c("Sample size method:","Type of test:","Type I error:","Placebo effect:",
+          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo effect:",
             "Change in the estimate of the parameter of interest:", "Allocation ratio"),
             Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, 
               input$beta*input$pct.change,input$edlandAllocation))) 
         }else{
-          a<-data.frame(Summary=c("Sample size method:","Type of test:","Type I error:","Placebo effect:",
+          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo effect:",
             "Change in the estimate of the parameter of interest:"),
             Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, 
               input$beta*input$pct.change)))
@@ -321,12 +311,9 @@ shinyServer(
         
       }
     })
-    
-    
-    
-    ########################## MMRM #####################################################################
-    #####################################################################################################
-    ####### Interface
+
+    # MMRM ----
+    ## Power/Sample size switch ----
     observeEvent(input$analysisTypeMMRM, {
       if(input$analysisTypeMMRM %in% c("Sample size")){
         shinyjs::enable("powerMMRM")
@@ -337,53 +324,16 @@ shinyServer(
       }
     })
     
-    # corSelect<-reactive({
-    #   switch (input$matrixMMRM,
-    #           "exchangeable" = 1,
-    #           "general"=1,
-    #           "ar1"=2
-    #   )
-    # })
-    
-    # corSelect<-reactiveValues(exch=0, gen=0, ar=0)
-    # observeEvent(input$matrixMMRM,{
-    #   if(input$matrixMMRM %in% c("exchangeable")){
-    #     corSelect$exch<-1
-    #     corSelect$gen<-0
-    #     corSelect$ar<-0
-    #   } else if(input$matrixMMRM %in% c("general")){
-    #     corSelect$exch<-0
-    #     corSelect$gen<-1
-    #     corSelect$ar<-0
-    #   } else {
-    #     corSelect$exch<-0
-    #     corSelect$gen<-0
-    #     corSelect$ar<-1
-    #   }
-    # })
     size<-reactive({
       input$timePoints
     })
-    
-    
-    
-    #m2 <- matrix(0,nrow=size*2, ncol = 1, dimnames = list(paste0('t',1:(size*2)),NULL))
-    #if(!is.null(input$matrixMMRM)){
+
     observeEvent(input$matrixMMRM, {
       M <- matrix(input$rhoMMRM,nrow=size(), ncol = size(), 
         dimnames = list(paste0('t',1:size()),paste0('t',1:size())))
       diag(M)<-1
       m <- matrix(1,nrow=size(), ncol = 1, dimnames = list(paste0('t',1:size()),NULL))
       
-      #update
-      # observeEvent(input$updateMMRM, {
-      # 
-      # M <- matrix(input$rhoMMRM,nrow=size(), ncol = size(), 
-      #             dimnames = list(paste0('t',1:size()),paste0('t',1:size())))
-      # diag(M)<-1
-      # m <- matrix(1,nrow=size(), ncol = 1, dimnames = list(paste0('t',1:size()),NULL))
-      # })
-      #update end
       if(input$matrixMMRM %in% c("exchangeable")){
         removeUI(
           selector = "#RaExMMRM"
@@ -534,26 +484,13 @@ shinyServer(
         # )
       }
     })
-    #})
-    
-    
-    ##############################update 
-    
+
     observeEvent(input$updateMMRM, {
       M <- matrix(input$rhoMMRM,nrow=size(), ncol = size(), 
         dimnames = list(paste0('t',1:size()),paste0('t',1:size())))
       diag(M)<-1
       m <- matrix(1,nrow=size(), ncol = 1, dimnames = list(paste0('t',1:size()),NULL))
       
-      #update
-      # observeEvent(input$updateMMRM, {
-      # 
-      # M <- matrix(input$rhoMMRM,nrow=size(), ncol = size(), 
-      #             dimnames = list(paste0('t',1:size()),paste0('t',1:size())))
-      # diag(M)<-1
-      # m <- matrix(1,nrow=size(), ncol = 1, dimnames = list(paste0('t',1:size()),NULL))
-      # })
-      #update end
       if(input$matrixMMRM %in% c("exchangeable")){
         removeUI(
           selector = "#RaExMMRM"
@@ -567,9 +504,6 @@ shinyServer(
         removeUI(
           selector = "#rbExMMRM"
         )
-        # removeUI(
-        #   selector = "#lambdaExMMRM"
-        # )
         insertUI(
           selector = "#RaMMRM",
           where="afterEnd",
@@ -704,7 +638,6 @@ shinyServer(
         # )
       }
     })
-    ###########
     
     observeEvent(input$estimateMMRM, {
       if(input$estimateMMRM %in% c("delta")){
@@ -732,11 +665,8 @@ shinyServer(
         shinyjs::enable("lambdaMMRM")
       }
     })
-    
-    
-    
-    
-    ###################### Output ###############
+
+    ## Output ----
     output$mmrmplot<-renderPlotly({
       if(input$matrixMMRM %in% c("exchangeable") & input$analysisTypeMMRM %in% c("Sample size")){
         power<-seq(input$powerMMRM[1],input$powerMMRM[2],0.001)
@@ -906,20 +836,19 @@ shinyServer(
     
     output$summarySelectionMMRM<-renderTable({
       if(input$estimateMMRM %in% c("deltaMMRM")){
-        a<-data.frame(Summary=c("Association structure:","Number of time points","Type of test:","Type I error:","Placebo effect:",
+        a<-data.frame(Summary=c("Association structure", "Number of time points","Type of test", "Type I error", "Placebo effect:",
           "Effect size:", "Allocation ratio: "),
           Value=as.character(c(input$matrixMMRM,input$timePoints,input$alternative, input$alpha, input$beta,
             input$delta, input$lambdaMMRM)))
       } else{
-        a<-data.frame(Summary=c("Association structure:","Number of time points","Type of test:","Type I error:","Placebo effect:",
+        a<-data.frame(Summary=c("Association structure", "Number of time points","Type of test", "Type I error", "Placebo effect:",
           "Effect size:", "Allocation ratio: "),
           Value=as.character(c(input$matrixMMRM,input$timePoints, input$alternative, input$alpha, input$beta,
             input$beta*input$pct.change, input$lambdaMMRM)))
       }
     })
     
-    
-    ############################### ADNI GENERATOR ######################################
+    # ADNI GENERATOR (slope model) ----
     output$selectAge<-renderUI({
       age<-unique(adnimerge$AGE)
       sliderInput("age", label = "Age", min = 50, max = 100, 
@@ -928,90 +857,62 @@ shinyServer(
     
     output$selectAV45<-renderUI({
       AV45.bl<-round(unique(adnimerge$AV45.bl),2)
-      sliderInput("av45bl", label = "Baseline AV45", min = 0, max = max(AV45.bl, na.rm = T), 
+      sliderInput("av45bl", label = "AV45 (SUVR)", min = 0, max = max(AV45.bl, na.rm = T), 
         value = c(0, round(max(AV45.bl, na.rm = T),2)), step = 0.01)
     })
     
     output$selectAbeta<-renderUI({
       ABETA.bl<-unique(as.numeric(adnimerge$ABETA.bl))
-      sliderInput("abetabl", label = "Baseline ABETA", min = min(ABETA.bl, na.rm = T), max = ceiling(max(ABETA.bl, na.rm = T)), 
+      sliderInput("abetabl", label = "Aβ42", min = min(ABETA.bl, na.rm = T), max = ceiling(max(ABETA.bl, na.rm = T)), 
         value = c(min(ABETA.bl, na.rm = T), round(max(ABETA.bl, na.rm = T),1)))
     })
     
     output$selectTau<-renderUI({
       TAU.bl<-unique(as.numeric(adnimerge$TAU.bl))
-      sliderInput("taubl", label = "Baseline Tau", min = min(TAU.bl, na.rm = T), max = ceiling(max(TAU.bl, na.rm = T)), 
+      sliderInput("taubl", label = "Tau", min = min(TAU.bl, na.rm = T), max = ceiling(max(TAU.bl, na.rm = T)), 
         value = c(min(TAU.bl, na.rm = T), round(max(TAU.bl, na.rm = T),1)))
     })
     
     output$selectRatio<-renderUI({
       ratio.bl<-unique(as.numeric(adnimerge$TAU.bl)/as.numeric(adnimerge$ABETA.bl))
-      sliderInput("tauRatio", label = "Baseline TAU/ABETA", min = 0, 
+      sliderInput("tauRatio", label = "Tau/Aβ42 ratio", min = 0, 
         max = round(max(ratio.bl, na.rm = T),1), step = 0.01,
         value = c(0, round(max(ratio.bl, na.rm = T),1)))
     })
     
     output$selectDx<-renderUI({
       Dx<-levels(adnimerge$DX.bl)
-      checkboxGroupInput("dx", label =HTML(paste0("Baseline Diagnosis (",tags$em("Do not deselect all"),")")),
+      checkboxGroupInput("dx", label =HTML(paste0("Diagnosis (",tags$em("Do not deselect all"),")")),
         choices = Dx, selected = Dx, inline = T)
     })
     
     output$selectMMSE<-renderUI({
       MMSE.bl<-adnimerge$MMSE.bl
       MMSE.bl<-unique(as.numeric(MMSE.bl))
-      sliderInput("mmsebl", label = "Baseline MMSE", min = min(MMSE.bl, na.rm = T), max = ceiling(max(MMSE.bl, na.rm = T)), 
+      sliderInput("mmsebl", label = "MMSE", min = min(MMSE.bl, na.rm = T), max = ceiling(max(MMSE.bl, na.rm = T)), 
         value = c(min(MMSE.bl, na.rm = T), round(max(MMSE.bl, na.rm = T),1)))
     })
     
     output$selectCDRSB<-renderUI({
       CDRSB.bl<-adnimerge$CDRSB.bl
       CDRSB.bl<-unique(as.numeric(CDRSB.bl))
-      sliderInput("cdrsbbl", label = "Baseline CDRSB", min = min(CDRSB.bl, na.rm = T), max = ceiling(max(CDRSB.bl, na.rm = T)), 
+      sliderInput("cdrsbbl", label = "CDRSB", min = min(CDRSB.bl, na.rm = T), max = ceiling(max(CDRSB.bl, na.rm = T)), 
         value = c(min(CDRSB.bl, na.rm = T), round(max(CDRSB.bl, na.rm = T),1)))
     })
     
     output$selectLogMem<-renderUI({
       LDELTOTAL.bl<-adnimerge$LDELTOTAL.bl
       LDELTOTAL.bl<-unique(as.numeric(LDELTOTAL.bl))
-      sliderInput("logmembbl", label = "Baseline Logical Memory", min = min(LDELTOTAL.bl, na.rm = T), max = ceiling(max(LDELTOTAL.bl, na.rm = T)), 
+      sliderInput("logmembbl", label = "Logical Memory", min = min(LDELTOTAL.bl, na.rm = T), max = ceiling(max(LDELTOTAL.bl, na.rm = T)), 
         value = c(min(LDELTOTAL.bl, na.rm = T), round(max(LDELTOTAL.bl, na.rm = T),1)))
     })
     
-    # output$selectGender<-renderUI({
-    #   a<-unique(adnimerge$PTGENDER)
-    #   checkboxGroupInput(inputId = "gender", label = "Gender", choices = a, selected = a)
-    # })
-    
-    # output$selectEduc<-renderUI({
-    #   a<-unique(adnimerge$PTEDUCAT)
-    #   checkboxGroupInput("education", label = "Education", choices = a, selected = a)
-    #   
-    # })
-    # output$selectEduc<-renderUI({
-    #   a<-adnimerge$PTEDUCAT
-    #   a<-unique(as.numeric(a))
-    #   sliderInput("education", label = "Education", min = min(a, na.rm = T), 
-    #     max = ceiling(max(a, na.rm = T)), value = c(min(a, na.rm = T), round(max(a, na.rm = T),1)))
-    # })
-    # 
-    # output$selectEth<-renderUI({
-    #   a<-unique(adnimerge$PTETHCAT)
-    #   checkboxGroupInput("ethnicity", label = "Ethnicity", choices = a, selected = a)
-    # })
-    # 
-    # output$selectRace<-renderUI({
-    #   a<-unique(adnimerge$PTRACCAT)
-    #   checkboxGroupInput("race", label = "Race", choices = a, selected = a)
-    # })
-    
-    output$selectTimeInterval<-renderUI({
-      a<-adnimerge$Years.bl
-      sliderInput("timeInterval", label = "Select study duration", min = 0, 
-        max = ceiling(max(a, na.rm = T)), value = c(0, ceiling(max(a, na.rm = T))))
+    output$selectDuration<-renderUI({
+      sliderInput("studyDuration", label = "Select study duration (years)", min = 1, 
+        max = 5, value = 1.5, step=0.5)
     })
     
-    ########### Grayout criteria selection ############################
+    ## Grayout criteria selection ----
     observeEvent(input$submitCriteria, {
       if(c("AGE") %in% input$criteria | is.null(input$criteria)){
         shinyjs::enable("age")
@@ -1082,47 +983,8 @@ shinyServer(
         shinyjs::disable("edlandAllocationADNI")
       }
     })
-    
-    
-    
-    ########### Grayout covariate selection ############################
-    # observeEvent(input$submitCovariates,{
-    #   if(c("Gender") %in% input$covariates | is.null(input$covariates)){
-    #     shinyjs::enable("gender")
-    #   }else{
-    #     shinyjs::disable("gender")
-    #   }
-    #   
-    #   if(c("Education") %in% input$covariates | is.null(input$covariates)){
-    #     shinyjs::enable("education")
-    #   }else{
-    #     shinyjs::disable("education")
-    #   }
-    #   
-    #   if(c("Ethnicity") %in% input$covariates | is.null(input$covariates)){
-    #     shinyjs::enable("ethnicity")
-    #   }else{
-    #     shinyjs::disable("ethnicity")
-    #   }
-    #   
-    #   if(c("Race") %in% input$covariates | is.null(input$covariates)){
-    #     shinyjs::enable("race")
-    #   }else{
-    #     shinyjs::disable("race")
-    #   }
-    #   
-    #   if(c("APOE4") %in% input$covariates | is.null(input$covariates)){
-    #     shinyjs::enable("APOE42")
-    #   }else{
-    #     shinyjs::disable("APOE42")
-    #   }
-    #   
-    # })
-    
-    ######################## Default calculation ###################
-    # output$printC<-renderPrint({
-    #   as.character(input$criteria)
-    # })
+
+    ## Default calculation ----
     subdata<-reactive({
       a<-c("","AGE","ABETA.bl","APOE4","TAU.bl","DX.bl","TAU/ABETA","AV45.bl","LDELTOTAL.bl",
         "MMSE.bl","CDRSB.bl")
@@ -1147,12 +1009,12 @@ shinyServer(
           subset(LDELTOTAL.bl >= input$logmembbl[1] & LDELTOTAL.bl <= input$logmembbl[2]| LDELTOTAL.bl %in% NA_real_) %>%
           subset(MMSE.bl >= input$mmsebl[1] & MMSE.bl <= input$mmsebl[2]| MMSE.bl %in% NA_real_) %>%
           subset(CDRSB.bl >= input$cdrsbbl[1] & CDRSB.bl <= input$cdrsbbl[2]| CDRSB.bl %in% NA_real_) %>%
-          subset(Years.bl>=input$timeInterval[1] & Years.bl <= input$timeInterval[2]| Years.bl %in% NA_real_)%>%
+          subset(Years.bl <= input$studyDuration + 0.25| Years.bl %in% NA_real_)%>%
           filter(APOE4 %in% apoe| APOE4 %in% NA_integer_)
         
       }else {
         adni<-adnimerge %>%
-          filter(Years.bl>=input$timeInterval[1] & Years.bl <= input$timeInterval[2]| Years.bl %in% NA_real_)
+          filter(Years.bl <= input$studyDuration + 0.25 | Years.bl %in% NA_real_)
         if("AGE" %in% as.character(input$criteria)){
           adni<-adni %>%
             filter(AGE >= input$age[1] & AGE <= input$age[2])
@@ -1206,7 +1068,7 @@ shinyServer(
         mutate(RID=factor(RID))
     })
     
-    ############### Baseline summaries ################
+    ## Baseline summaries ----
     observeEvent(input$summaryby,{
       output$baselineSummary<-renderTable({
         dat<-subdata() %>%
@@ -1246,36 +1108,29 @@ shinyServer(
     output$indPlot<-renderPlotly({
       p <- ggplot(data = subdata(), aes(x = Years.bl, 
         y = get(input$longout), group = RID))+
-        # geom_point()+
-        geom_line()+theme_bw()+xlab("Years from baseline")+
+        geom_line(alpha=0.25)+theme_bw()+xlab("Years from baseline")+
         ylab(as.character(input$longout))
       ggplotly(p)
     })
-    
-    
+
     output$plotProfile<-renderPlotly({
       p<-ggplot(subdata(), aes(x=Years.bl,y=get(input$longout))) +
-        geom_point() +
+        geom_point(alpha=0.25) +
         geom_smooth()+theme_bw()+xlab("Years from baseline")+
         ylab(as.character(input$longout))
       ggplotly(p)
     })
     
-    
-    
+    ## Model fit ----
     modelFit<-reactive({
-      #m1 <- lmer(get(paste(input$longout)) ~ Years.bl + (Years.bl |RID), subdata())
       if(is.null(input$selectCovariates)){
         m1 <-lmer(formula(paste(input$longout, "~ Years.bl + (Years.bl |RID)")), subdata())
-        #round(summary(m1)$coef['Years.bl', 'Estimate'],4) 
         m1
       }else{
         cov<-paste(input$selectCovariates,collapse = "+")
         m1 <-lmer(formula(paste(input$longout,"~",cov,"+ Years.bl + (Years.bl |RID)")), subdata())
-        #round(summary(m1)$coef['Years.bl', 'Estimate'],4) 
         m1
       }
-      
     })
     
     slope<-reactive({
@@ -1345,35 +1200,23 @@ shinyServer(
     
     output$summarySelectionADNI<-renderTable({
       if(input$methodADNI %in% c("edland")){
-        a<-data.frame(Summary=c("Sample size method:","Type of test:","Type I error:",
+        a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error:",
           "Slope or rate of change in the outcome:", "Percentage change in slope", 
           "Effect size","Allocation ratio"),
           Value=as.character(c(input$methodADNI,input$alternativeADNI, input$alphaADNI, 
             slope(), input$pchangeADNI,slope()*input$pchangeADNI/100, 
             input$edlandAllocationADNI))) 
       }else{
-        a<-data.frame(Summary=c("Sample size method:","Type of test:","Type I error:",
+        a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error:",
           "Slope or rate of change in the outcome:", "Percentage change in slope",
           "Effect size"),
           Value=as.character(c(input$methodADNI,input$alternativeADNI, input$alphaADNI,  
             slope(), input$pchangeADNI,slope()*input$pchangeADNI/100)))
       }
-      
-      # if(input$methodADNI %in% c("edland")){
-      #   a<-data.frame(Summary=c("Sample size method:","Type of test:","Type I error:","Placebo effect:",
-      #                           "Change in the estimate of the parameter of interest:", "Allocation ratio"),
-      #                 Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, 
-      #                                      input$beta*input$pct.change,input$edlandAllocation))) 
-      # }else{
-      #   a<-data.frame(Summary=c("Sample size method:","Type of test:","Type I error:","Placebo effect:",
-      #                           "Change in the estimate of the parameter of interest:"),
-      #                 Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, 
-      #                                      input$beta*input$pct.change)))
-      
     })
     
     
-    ############################### ADNI GENERATOR (MMRM) ######################################
+    # ADNI GENERATOR (MMRM) ----
     output$selectAgeMMRM<-renderUI({
       age<-round(unique(adnimerge$AGE),1)
       sliderInput("ageMMRM", label = "Age", min =50, max = 100, 
@@ -1382,64 +1225,62 @@ shinyServer(
     
     output$selectAV45MMRM<-renderUI({
       AV45.bl<-round(unique(adnimerge$AV45.bl),2)
-      sliderInput("av45blMMRM", label = "Baseline AV45", min = 0, max = max(AV45.bl, na.rm = T), 
+      sliderInput("av45blMMRM", label = "AV45 (SUVR)", min = 0, max = max(AV45.bl, na.rm = T), 
         value = c(0, round(max(AV45.bl, na.rm = T),2)), step = 0.01)
     })
     
     output$selectAbetaMMRM<-renderUI({
       ABETA.bl<-unique(as.numeric(adnimerge$ABETA.bl))
-      sliderInput("abetablMMRM", label = "Baseline ABETA", min = min(ABETA.bl, na.rm = T), max = ceiling(max(ABETA.bl, na.rm = T)), 
+      sliderInput("abetablMMRM", label = "Aβ42 (pg/ml)", min = min(ABETA.bl, na.rm = T), max = ceiling(max(ABETA.bl, na.rm = T)), 
         value = c(min(ABETA.bl, na.rm = T), round(max(ABETA.bl, na.rm = T),1)))
     })
     
     output$selectTauMMRM<-renderUI({
       TAU.bl<-unique(as.numeric(adnimerge$TAU.bl))
-      sliderInput("taublMMRM", label = "Baseline Tau", min = min(TAU.bl, na.rm = T), max = ceiling(max(TAU.bl, na.rm = T)), 
+      sliderInput("taublMMRM", label = "Tau (pg/ml)", min = min(TAU.bl, na.rm = T), max = ceiling(max(TAU.bl, na.rm = T)), 
         value = c(min(TAU.bl, na.rm = T), round(max(TAU.bl, na.rm = T),1)))
     })
     
     output$selectRatioMMRM<-renderUI({
       ratio.bl<-unique(as.numeric(adnimerge$TAU.bl)/as.numeric(adnimerge$ABETA.bl))
-      sliderInput("tauRatioMMRM", label = "Baseline TAU/ABETA", min = min(0, na.rm = T), 
+      sliderInput("tauRatioMMRM", label = "Tau/Aβ42 ratio", min = min(0, na.rm = T), 
         max = round(max(ratio.bl, na.rm = T),1), step = 0.01,
         value = c(0, round(max(ratio.bl, na.rm = T),1)))
     })
     
     output$selectDxMMRM<-renderUI({
       Dx<-levels(adnimerge$DX.bl)
-      checkboxGroupInput("dxMMRM", label = HTML(paste0("Baseline Diagnosis (",tags$em("Do not deselect all"),")")), 
+      checkboxGroupInput("dxMMRM", label = HTML(paste0("Diagnosis (",tags$em("Do not deselect all"),")")), 
         choices = Dx, selected = Dx, inline = T)
     })
     
     output$selectMMSEMMRM<-renderUI({
       MMSE.bl<-adnimerge$MMSE.bl
       MMSE.bl<-unique(as.numeric(MMSE.bl))
-      sliderInput("mmseblMMRM", label = "Baseline MMSE", min = min(MMSE.bl, na.rm = T), max = ceiling(max(MMSE.bl, na.rm = T)), 
+      sliderInput("mmseblMMRM", label = "MMSE", min = min(MMSE.bl, na.rm = T), max = ceiling(max(MMSE.bl, na.rm = T)), 
         value = c(min(MMSE.bl, na.rm = T), round(max(MMSE.bl, na.rm = T),1)))
     })
     
     output$selectCDRSBMMRM<-renderUI({
       CDRSB.bl<-adnimerge$CDRSB.bl
       CDRSB.bl<-unique(as.numeric(CDRSB.bl))
-      sliderInput("cdrsbblMMRM", label = "Baseline CDRSB", min = min(CDRSB.bl, na.rm = T), max = ceiling(max(CDRSB.bl, na.rm = T)), 
+      sliderInput("cdrsbblMMRM", label = "CDRSB", min = min(CDRSB.bl, na.rm = T), max = ceiling(max(CDRSB.bl, na.rm = T)), 
         value = c(min(CDRSB.bl, na.rm = T), round(max(CDRSB.bl, na.rm = T),1)))
     })
     
     output$selectLogMemMMRM<-renderUI({
       LDELTOTAL.bl<-adnimerge$LDELTOTAL.bl
       LDELTOTAL.bl<-unique(as.numeric(LDELTOTAL.bl))
-      sliderInput("logmembblMMRM", label = "Baseline Logical Memory", min = min(LDELTOTAL.bl, na.rm = T), max = ceiling(max(LDELTOTAL.bl, na.rm = T)), 
+      sliderInput("logmembblMMRM", label = "Logical Memory", min = min(LDELTOTAL.bl, na.rm = T), max = ceiling(max(LDELTOTAL.bl, na.rm = T)), 
         value = c(min(LDELTOTAL.bl, na.rm = T), round(max(LDELTOTAL.bl, na.rm = T),1)))
     })
     
-    output$selectTimeIntervalMMRM<-renderUI({
-      a<-adnimerge$Years.bl
-      #a<-unique(as.numeric(a))
-      sliderInput("timeIntervalMMRM", label = "Select study duration", min = 0, 
-        max = ceiling(max(a, na.rm = T)), value = c(0, ceiling(max(a, na.rm = T))))
+    output$selectDurationMMRM<-renderUI({
+      sliderInput("studyDurationMMRM", label = "Select study duration (years)", min = 1, 
+        max = 5, value = 1.5, step=0.5)
     })
     
-    ########### Grayout criteria selection ############################
+    ## Grayout criteria selection ----
     observeEvent(input$submitCriteriaMMRM, {
       if(c("AGE") %in% input$criteriaMMRM | is.null(input$criteriaMMRM)){
         shinyjs::enable("ageMMRM")
@@ -1511,19 +1352,8 @@ shinyServer(
       }
     })
     
-    # size<-reactive({
-    #   input$timePoints
-    # })
-    # m <- matrix(1,nrow=size(), ncol = 1, dimnames = list(paste0('t',1:size()),NULL))
-    # 
-    # insertUI(
-    #   selector = "#raADNIMMRM",
-    #   where="afterEnd",
-    #   ui=tags$div(id="raExADNIMMRM",tags$b("Retention in group A (ra)"),
-    #               matrixInput(inputId = "ramatrixADNIMMRM",value = m, rows = list(names = T),
-    #                           cols = list(names = T), class = 'numeric'))
-    # )
-    ###################### Output (MMRM) ###############
+    ## Output (MMRM) ----
+    ### MMRM data -----
     subdataMMRM<-reactive({
       a<-c("","AGE","ABETA.bl","APOE4","TAU.bl","DX.bl","TAU/ABETA","AV45.bl","LDELTOTAL.bl",
         "MMSE.bl","CDRSB.bl")
@@ -1548,11 +1378,11 @@ shinyServer(
           subset(LDELTOTAL.bl >= input$logmembblMMRM[1] & LDELTOTAL.bl <= input$logmembblMMRM[2]| LDELTOTAL.bl %in% NA_real_) %>%
           subset(MMSE.bl >= input$mmseblMMRM[1] & MMSE.bl <= input$mmseblMMRM[2]| MMSE.bl %in% NA_real_) %>%
           subset(CDRSB.bl >= input$cdrsbblMMRM[1] & CDRSB.bl <= input$cdrsbblMMRM[2]| CDRSB.bl %in% NA_real_) %>%
-          subset(Years.bl>=input$timeIntervalMMRM[1] & Years.bl <= input$timeIntervalMMRM[2]| Years.bl %in% NA_real_)%>%
+          subset(Years.bl <= input$studyDurationMMRM + 0.25 | Years.bl %in% NA_real_)%>%
           filter(APOE4 %in% apoe| APOE4 %in% NA_integer_)
       }else {
         adni<-adnimerge %>%
-          filter(Years.bl>=input$timeIntervalMMRM[1] & Years.bl <= input$timeIntervalMMRM[2]| Years.bl %in% NA_real_)
+          filter(Years.bl <= input$studyDurationMMRM + 0.25 | Years.bl %in% NA_real_)
         if("AGE" %in% as.character(input$criteriaMMRM)){
           adni<-adni %>%
             filter(AGE >= input$ageMMRM[1] & AGE <= input$ageMMRM[2]| AGE %in% NA_real_)
@@ -1612,13 +1442,16 @@ shinyServer(
       # adni$VISCODE[adni$VISCODE=="bl"]<-"bl0"
       # adni$VISCODE2<-as.numeric(gsub("[^0-9.]", "",  adni$VISCODE))
       
+      adni$Y <- adni[, input$longoutMMRM]
       adni<-adni %>%
-        mutate(t.index=as.numeric(factor(VISCODE2)),
+        filter(!is.na(Y)) %>%
+        mutate(
+          Yr = as.factor(M/12),
+          t.index=as.numeric(Yr),
           RID=factor(RID))
-      
     })
     
-    ############### Baseline summaries ################
+    ### Baseline summaries ----
     observeEvent(input$summarybyMMRM,{
       output$baselineSummaryMMRM<-renderTable({
         dat<-subdataMMRM() %>%
@@ -1653,50 +1486,56 @@ shinyServer(
         as.data.frame(summary(tbl, text = "html"))
       }, sanitize.text.function = function(x) x)
     })
-    #### model fitting 
+    ### model fitting ----
     modelFitMMRM<-reactive({
       if(input$matrixADNIMMRM %in% c("exchangeable")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Years.bl")), subdataMMRM(),na.action = na.omit,
-            correlation = corCompSymm(form = ~ t.index | RID))
-          #round(summary(m1)$coef['Years.bl'],4)
+          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), 
+            subdataMMRM(),
+            na.action = na.omit,
+            correlation = corCompSymm(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+")
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Years.bl")), 
-            subdataMMRM(),na.action = na.omit,
-            correlation = corCompSymm(form = ~ t.index | RID))
-          #round(summary(m1)$coef['Years.bl'],4) 
+          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")), 
+            subdataMMRM(),
+            na.action = na.omit,
+            correlation = corCompSymm(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }
         
       }else if(input$matrixADNIMMRM %in% c("general")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Years.bl")), subdataMMRM(),na.action = na.omit,
-            correlation = corSymm(form = ~ t.index | RID))
-          #round(summary(m1)$coef['Years.bl'],4)
+          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), 
+            subdataMMRM(),
+            na.action = na.omit,
+            correlation = corSymm(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+") 
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Years.bl")),
-            subdataMMRM(),na.action = na.omit,
-            correlation = corSymm(form = ~ t.index | RID))
-          #round(summary(m1)$coef['Years.bl'],4)
+          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")),
+            subdataMMRM(),
+            na.action = na.omit,
+            correlation = corSymm(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }
       }else if(input$matrixADNIMMRM %in% c("ar1")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Years.bl")), subdataMMRM(),na.action = na.omit,
-            correlation = corAR1(form = ~ t.index | RID))
-          #round(summary(m1)$coef['Years.bl'],4)
+          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), subdataMMRM(),na.action = na.omit,
+            correlation = corAR1(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+")
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Years.bl")), 
+          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")), 
             subdataMMRM(),na.action = na.omit,
-            correlation = corAR1(form = ~ t.index | RID))
-          #round(summary(m1)$coef['Years.bl'],4)
+            correlation = corAR1(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }
       }
     })
     
-    slopeMMRM<-reactive({
-      round(summary(modelFitMMRM())$coef['Years.bl'],4)
+    changeMMRM<-reactive({
+      round(summary(modelFitMMRM())$coef[paste0('Yr', as.character(input$studyDurationMMRM))],4)
     })
     
     output$modelFitSummaryMMRM<-renderPrint({
@@ -1706,16 +1545,14 @@ shinyServer(
     output$indPlotMMRM<-renderPlotly({
       p <- ggplot(data = subdataMMRM(), aes(x = Years.bl, 
         y = get(input$longoutMMRM), group = RID))+
-        # geom_point()+
-        geom_line()+theme_bw()+xlab("Years from baseline")+
+        geom_line(alpha=0.25)+theme_bw()+xlab("Years from baseline")+
         ylab(as.character(input$longoutMMRM))
       ggplotly(p)
     })
     
-    
     output$plotProfileMMRM<-renderPlotly({
       p<-ggplot(subdataMMRM(), aes(x=Years.bl,y=get(input$longoutMMRM))) +
-        geom_point() +
+        geom_point(alpha=0.25) +
         geom_smooth()+theme_bw()+xlab("Years from baseline")+
         ylab(as.character(input$longoutMMRM))
       ggplotly(p)
@@ -1724,49 +1561,51 @@ shinyServer(
     output$digglePlotMMRM<-renderPlotly({
       if(input$matrixADNIMMRM %in% c("exchangeable")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Years.bl")), subdataMMRM(),na.action = na.omit,
-            correlation = corCompSymm(form = ~ t.index | RID))
+          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), subdataMMRM(),na.action = na.omit,
+            correlation = corCompSymm(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+")
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Years.bl")), 
+          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")), 
             subdataMMRM(),na.action = na.omit,
-            correlation = corCompSymm(form = ~ t.index | RID))
+            correlation = corCompSymm(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }
         
       }else if(input$matrixADNIMMRM %in% c("general")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Years.bl")), subdataMMRM(),na.action = na.omit,
-            correlation = corSymm(form = ~ t.index | RID))
+          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), subdataMMRM(),na.action = na.omit,
+            correlation = corSymm(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+") 
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Years.bl")),
+          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")),
             subdataMMRM(),na.action = na.omit,
-            correlation = corSymm(form = ~ t.index | RID))
+            correlation = corSymm(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }
       }else if(input$matrixADNIMMRM %in% c("ar1")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Years.bl")), subdataMMRM(),na.action = na.omit,
-            correlation = corAR1(form = ~ t.index | RID))
+          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), subdataMMRM(),na.action = na.omit,
+            correlation = corAR1(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+")
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Years.bl")), 
+          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")), 
             subdataMMRM(),na.action = na.omit,
-            correlation = corAR1(form = ~ t.index | RID))
+            correlation = corAR1(form = ~ t.index | RID),
+            weights = varIdent(form = ~ 1 | Yr))
         }
       }
       
-      # if(input$directionChangeMMRM %in% c("Decrease")){
-      #   pct.change<-(1-input$pchangeADNIMMRM/100)#for decrease
-      # }else{
-      #   pct.change<-(1+input$pchangeADNIMMRM/100)#for increase 
-      # }
       C <- corMatrix(m1$modelStruct$corStruct)[[1]]
-      sigmaa <- m1$sigma 
+      WEIGHTS <- coef(m1$modelStruct$varStruct, unconstrained = FALSE)
+      sigmaa <- m1$sigma  * last(WEIGHTS)
       ra <- seq(1,input$percRetentionA/100,length=nrow(C))
       rb <- seq(1,input$percRetentionB/100,length=nrow(C))
       power<- seq(input$powerADNIMMRM[1],input$powerADNIMMRM[2],0.01)
       ssize<-rep(0,length(power))
-      delta<-slopeMMRM()*input$pchangeADNIMMRM/100
+      delta<-changeMMRM()*input$pchangeADNIMMRM/100
       for(i in 1:length(power)){
         fit<-power.mmrm(Ra = C, ra = ra, sigmaa = sigmaa, rb=rb,
           sig.level=input$alphaADNIMMRM,alternative=input$alternativeADNIMMRM, 
@@ -1795,17 +1634,25 @@ shinyServer(
     })
     
     output$summarySelectionADNIMMRM<-renderTable({
-      a<-data.frame(Summary=c("Correlation structure:","Type of test:","Type I error:","Slope in group 1",
-        "Effect size:", "Percentage change in slope","Allocation ratio", "Percent retention in group a",
-        "Percent retention in group b"),
-        Value=as.character(c(input$matrixADNIMMRM,input$alternativeADNIMMRM, input$alphaADNIMMRM, slopeMMRM(),
-          slopeMMRM()*input$pchangeADNIMMRM/100, input$pchangeADNIMMRM, input$edlandAllocationADNIMMRM,
-          input$percRetentionA, input$percRetentionB)))
+      a<-data.frame(Summary=c("Correlation structure", "Type of test", "Type I error", "Pilot estimate of placebo group change",
+        "Residual standard deviation at last visit",
+        "Effect size (raw scale)", "Effect size (% of placebo change)", "Allocation ratio", "Percent retention in group a",
+        "Percent retention in group b", "Visits times (years)"),
+        Value=as.character(c(input$matrixADNIMMRM,
+          input$alternativeADNIMMRM, 
+          input$alphaADNIMMRM,
+          XXXXXX weight * sigma,
+          changeMMRM(),
+          changeMMRM()*input$pchangeADNIMMRM/100, 
+          paste0(input$pchangeADNIMMRM,'%'), 
+          input$edlandAllocationADNIMMRM,
+          paste0(input$percRetentionA,'%'), 
+          paste0(input$percRetentionB,'%'),
+          paste0(levels(subdataMMRM()$Yr), collapse = ", ")
+          )))
     })
     
-    
-    
-    ################# About ###########
+    # About ----
     output$aboutApp = renderText({
       HTML(paste(tags$div(
         tags$b(h3("Sample Size and Power Analysis Dashboard")),

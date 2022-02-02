@@ -227,7 +227,7 @@ shinyUI(dashboardPage(skin = 'blue',
                 choices = c("Positive", "Negative"), selected =c("Positive", "Negative"))),
               # helpText("You should not deselect both")),
               column(3, uiOutput("selectAV45")),
-              column(3, uiOutput("selectTimeInterval")),
+              column(3, uiOutput("selectDuration")),
               
             ),
             fluidRow(
@@ -336,7 +336,7 @@ shinyUI(dashboardPage(skin = 'blue',
                 choices = c("Positive", "Negative"), selected =c("Positive", "Negative"))),
               #             helpText("You should not deselect both")),
               column(3, uiOutput("selectAV45MMRM")),
-              column(3, uiOutput("selectTimeIntervalMMRM")),
+              column(3, uiOutput("selectDurationMMRM")),
               
             ),
             fluidRow(
