@@ -45,6 +45,7 @@ shinyUI(dashboardPage(skin = 'blue',
     # lmm ----
     tabItems(
       tabItem(tabName = "lmmpower",
+        ## Inputs ----
         fluidRow(
           box(status = 'danger', title='Inputs', solidHeader = T,width = 12,
             fluidRow(column(3,
@@ -84,11 +85,6 @@ shinyUI(dashboardPage(skin = 'blue',
                   min=0, max = 1, step = 0.01, value = 0.30)),
               column(3,
                 numericInput("delta","Target treatment effect size (delta)",min = 0, step = 0.01, value = 1.5)),
-              # column(3,
-              #    sliderInput("beta.CI",label="95% confidence limits of the pilot estimate of beta (beta.CI)", value=95, min=0, max=100, step=5)),
-              # column(3,
-              #   sliderInput("delta.CI",label="95% confidence limits of the effect size (delta.CI)", value=95, min=0, max=100, step=5)),
-              
             ),
             fluidRow(
               column(3,
@@ -106,31 +102,22 @@ shinyUI(dashboardPage(skin = 'blue',
                 radioButtons(inputId="method", label = "Method", 
                   choiceNames = c("Liu and Liang (1997)", "Diggle et al (2002)", "Edland (2009)"),
                   choiceValues = c("diggle","liuliang","edland"), selected = "diggle")),
-              # column(3,
-              #        radioButtons(inputId="matrix", label = "Association structure", choices = list("covariance"), selected = "covariance")),
-              
-              # column(2,tags$div(id="rmoo"
-              #   #tags$b("Pilot estimate of a marginal model working correlation matrix (R)")
-              # )
-              #        #tags$b("Pilot estimate of a marginal model working correlation matrix (R)"),
-              #        # matrixInput("Rmatrix",value =uiOutput("R") , rows = list(names = T),
-              #        #             cols = list(names = T),copy = TRUE,paste = TRUE, class = 'numeric')
-              #        # uiOutput("R")
-              #        ),
               column(4, sliderInput("edlandAllocation", "Allocation ratio (lambda)", min = 0, max = 5, value = 1))
             )
           )),
+        ## Power analysis results ----
         fluidRow(
-          box(status = 'success', title='Outputs', solidHeader = T,width = 12,
+          box(status = 'success', title='Power analysis results', solidHeader = T,width = 12,
             fluidRow(
-              column(6, plotlyOutput("diggleSS")),column(6, textOutput("describeMethod"),br(),
-                tableOutput("summarySelection")),
-              
+              column(6, plotlyOutput("diggleSS")),
+              column(6, textOutput("describeMethod"), br(),
+              tableOutput("summarySelection")),
             )    
           ))
       ),
-      # mmrm ----
+      # MMRM ----
       tabItem(tabName = "powermmrm",
+        ## inputs ----
         fluidRow(
           box(status = 'danger', title='Inputs', solidHeader = T,width = 12,
             fluidRow(column(3,
@@ -188,17 +175,15 @@ shinyUI(dashboardPage(skin = 'blue',
               column(3,tags$div(id="RbMMRM"))
               ,column(2,actionButton("updateMMRM","Update/Enter"),
                 p("Use this action button to update size of  correlation matrix"))
-              #submitButton("Update!")
-              
-              
             )
           )),
         fluidRow(
-          
-          box(status = 'success', title='Outputs', solidHeader = T,width = 12,
+          ## Power analysis results ----
+          box(status = 'success', title='Power analysis results', solidHeader = T,width = 12,
             fluidRow(
-              column(6, plotlyOutput("mmrmplot")),column(6, textOutput("describeMethodMMRM"), br(),
-                tableOutput("summarySelectionMMRM"))
+              column(6, plotlyOutput("mmrmplot")),
+              column(6, textOutput("describeMethodMMRM"), br(),
+              tableOutput("summarySelectionMMRM"))
             )    
           ))
       ), #tabItem2 end

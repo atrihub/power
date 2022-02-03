@@ -138,7 +138,7 @@ shinyServer(
         dat<-data.frame(n=ssize, power=power)
         
         plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using ",input$method," method"), 
+          layout(title=paste("Power analysis using", methods[input$method]), 
             xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }else if(input$analysisType %in% c("Power") & #input$matrix %in% c("covariance") &
@@ -161,7 +161,7 @@ shinyServer(
         dat<-data.frame(n=n, power=pw)
         
         plot_ly(data=dat, x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using ",input$method," method"), 
+          layout(title=paste("Power analysis using", methods[input$method]),
             xaxis=list(title="Sample size per group"), yaxis=list(title="Power (%)"))
       
       }else if(input$analysisType %in% c("Sample size") & #input$matrix %in% c("covariance") &
@@ -186,7 +186,7 @@ shinyServer(
         dat<-data.frame(n=ssize, power=power)
         
         plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using ",input$method," method"), 
+          layout(title=paste("Power analysis using", methods[input$method]), 
             xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }else if(input$analysisType %in% c("Power") & #input$matrix %in% c("covariance") &
@@ -214,7 +214,7 @@ shinyServer(
         dat<-data.frame(n=n, power=pw)
         
         plot_ly(data=dat, x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using ",input$method," method"), 
+          layout(title=paste("Power analysis using", methods[input$method]),
             xaxis=list(title="Sample size, group 1"), yaxis=list(title="Power (%)"))
         
       }else if(input$analysisType %in% c("Sample size") & #input$matrix %in% c("covariance") & 
@@ -243,7 +243,7 @@ shinyServer(
         dat<-data.frame(n=ssize, power=power)
         
         plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using ",input$method," method"), 
+          layout(title=paste("Power analysis using", methods[input$method]),
             xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }else if(input$analysisType %in% c("Power") & #input$matrix %in% c("covariance") & 
@@ -272,11 +272,9 @@ shinyServer(
         dat<-data.frame(n=n, power=pw)
         
         plot_ly(data=dat, x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using ",input$method," method"), 
+          layout(title=paste("Power analysis using", methods[input$method]),
             xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
-        
       }
-      
     })
     
     ## Describe method ----
@@ -300,23 +298,23 @@ shinyServer(
     output$summarySelection<-renderTable({
       if(input$estimate %in% c("delta")){
         if(input$method %in% c("edland")){
-          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo effect:",
+          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo change",
             "Change in the estimate of the parameter of interest:", "Allocation ratio"),
             Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, input$delta,
               input$edlandAllocation))) 
         }else{
-          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo effect:",
+          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo change",
             "Change in the estimate of the parameter of interest:"),
             Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, input$delta)))
         }
       } else{
         if(input$method %in% c("edland")){
-          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo effect:",
+          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo change",
             "Change in the estimate of the parameter of interest:", "Allocation ratio"),
             Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, 
               input$beta*input$pct.change,input$edlandAllocation))) 
         }else{
-          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo effect:",
+          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo change",
             "Change in the estimate of the parameter of interest:"),
             Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, 
               input$beta*input$pct.change)))
@@ -826,10 +824,7 @@ shinyServer(
         plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
           layout(title=paste0("Power analysis for MMRM"),
             xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
-        
       }
-      
-      
     })
     
     output$describeMethodMMRM<-renderText({
@@ -849,14 +844,14 @@ shinyServer(
     
     output$summarySelectionMMRM<-renderTable({
       if(input$estimateMMRM %in% c("deltaMMRM")){
-        a<-data.frame(Summary=c("Association structure", "Number of time points","Type of test", "Type I error", "Placebo effect:",
+        a<-data.frame(Summary=c("Var-cov structure", "Number of time points","Type of test", "Type I error", "Placebo change",
           "Effect size:", "Allocation ratio: "),
-          Value=as.character(c(input$matrixMMRM,input$timePoints,input$alternative, input$alpha, input$beta,
+          Value=as.character(c(varCov[input$matrixMMRM], input$timePoints, input$alternative, input$alpha, input$beta,
             input$delta, input$lambdaMMRM)))
       } else{
-        a<-data.frame(Summary=c("Association structure", "Number of time points","Type of test", "Type I error", "Placebo effect:",
-          "Effect size:", "Allocation ratio: "),
-          Value=as.character(c(input$matrixMMRM,input$timePoints, input$alternative, input$alpha, input$beta,
+        a<-data.frame(Summary=c("Var-cov structure", "Number of time points","Type of test", "Type I error", "Placebo change",
+          "Effect size:", "Allocation ratio"),
+          Value=as.character(c(varCov[input$matrixMMRM], input$timePoints, input$alternative, input$alpha, input$beta,
             input$beta*input$pct.change, input$lambdaMMRM)))
       }
     })
@@ -1643,7 +1638,7 @@ shinyServer(
       
       dat<-data.frame(n=ssize, power=power)
       plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-        layout(title=paste0("Power analysis for MMRM with ",input$matrixADNIMMRM," correlation structure"),
+        layout(title="Power analysis for MMRM",
           xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
       #} 
     })
