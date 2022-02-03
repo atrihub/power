@@ -13,12 +13,6 @@ library(arsenal)
 library(dplyr)
 library(foreign)
 
-# To update data ----
-# adnimerge <- ADNIMERGE::adnimerge
-# save(adnimerge, file="ADNIMERGE.rdata")
-load("./ADNIMERGE.rdata")
-
-
 # Parameters ----
 ## Set colors ----
 # https://www.w3.org/TR/css-color-3/#svg-color
@@ -27,13 +21,32 @@ active_color <- "blue" # #1f77b4"
 recovered_color <- "green"
 death_color <- "red"
 
-csf2numeric <- function(x){
-  as.numeric(gsub('>', '', gsub('<', '', x)))
-}
+# To update data ----
+# adnimerge <- ADNIMERGE::adnimerge
+# adniDate <- packageDate('ADNIMERGE')
+# csf2numeric <- function(x){
+#   as.numeric(gsub('>', '', gsub('<', '', x)))
+# }
+# 
+# adnimerge <- adnimerge %>%
+#   mutate(across(c(ABETA.bl, TAU.bl), csf2numeric)) %>%
+#   filter(Years.bl <= 5.25)
+# 
+# save(adnimerge, adniDate, file="ADNIMERGE.rdata")
 
-adnimerge <- adnimerge %>%
-  mutate(across(c(ABETA.bl, TAU.bl), csf2numeric)) %>%
-  filter(Years.bl <= 5.25)
+load("./ADNIMERGE.rdata")
+
+methods <- c(
+  liuliang = 'Liu and Liang (1997)',
+  diggle = 'Diggle et al (2002)',
+  edland = 'Edland (2009)'
+)
+
+varCov <- c(
+  exchangeable = "Compound symmetric, heterogeneous",
+  general = "Unstructured, heterogeneous",
+  ar1 = "AR1, heterogeneous"
+)
 
 # shinyServer ----
 shinyServer(
@@ -91,8 +104,8 @@ shinyServer(
       }
     })
 
-    ## Linear model ----
-    ### Diggle ----
+    # Linear model ----
+    ## Diggle ----
     R<-reactive({
       #cov.s.i <- #0.8*sqrt(input$sig2.i)*sqrt(input$sig2.s)
       cov.t <- function(t1, t2, sig2.i, sig2.s, cov.s.i){
@@ -109,24 +122,24 @@ shinyServer(
       if(input$analysisType %in% c("Sample size") & #input$matrix %in% c("covariance") &
           input$method %in% c("diggle")){
         t = seq(input$startTime,input$entTime,input$timeStep)
-        power<-seq(input$power[1],input$power[2],0.01)
+        power<-seq(input$power[1],input$power[2],1)
         ssize<-rep(0,length(power))
         for(i in 1:length(power)){
           if(input$estimate %in% c("delta")){
             fit<-diggle.linear.power(delta=input$delta, t=t, R=R(), sig.level=input$alpha, 
-              alternative=input$alternative, power=power[i]) #, sigma2 = input$sig2.e
+              alternative=input$alternative, power=power[i]/100) #, sigma2 = input$sig2.e
           } else{
             delta<-input$beta*input$pct.change
             fit<-diggle.linear.power(delta=delta, t=t, R=R(), sig.level=input$alpha, 
-              alternative=input$alternative, power=power[i]) #, sigma2 = input$sig2.e
+              alternative=input$alternative, power=power[i]/100) #, sigma2 = input$sig2.e
           }
           ssize[i]<-fit$N
         }
         dat<-data.frame(n=ssize, power=power)
         
         plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using (",input$method,") method"), 
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+          layout(title=paste0("Power analysis using ",input$method," method"), 
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }else if(input$analysisType %in% c("Power") & #input$matrix %in% c("covariance") &
           input$method %in% c("diggle")){
@@ -147,34 +160,34 @@ shinyServer(
         }
         dat<-data.frame(n=n, power=pw)
         
-        plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using (",input$method,") method"), 
-            xaxis=list(title="Sample size per group"), yaxis=list(title="Power"))
+        plot_ly(data=dat, x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
+          layout(title=paste0("Power analysis using ",input$method," method"), 
+            xaxis=list(title="Sample size per group"), yaxis=list(title="Power (%)"))
       
       }else if(input$analysisType %in% c("Sample size") & #input$matrix %in% c("covariance") &
-          ### Edland Power ----
+          ## Edland Power ----
           input$method %in% c("edland")){
         t = seq(input$startTime,input$entTime,input$timeStep)
-        power<-seq(input$power[1],input$power[2],0.01)
+        power<-seq(input$power[1],input$power[2],1)
         ssize<-rep(0,length(power))
         for(i in 1:length(power)){
           if(input$estimate %in% c("delta")){
             fit<-edland.linear.power(delta=input$delta, t=t, sig2.s = input$sig2.s,sig2.int = input$sig2.i, sig2.e =input$sig2.e,
-              sig.level=input$alpha, alternative=input$alternative, power =power[i], 
+              sig.level=input$alpha, alternative=input$alternative, power =power[i]/100, 
               lambda = input$edlandAllocation)
           } else {
             delta<-input$beta*input$pct.change
             fit<-edland.linear.power(delta=delta, t=t, sig2.s = input$sig2.s, sig2.e =input$sig2.e,
               sig2.int = input$sig2.i,sig.level=input$alpha, alternative=input$alternative, 
-              power =power[i], lambda = input$edlandAllocation)
+              power =power[i]/100, lambda = input$edlandAllocation)
           }
           ssize[i]<-fit$N
         }
         dat<-data.frame(n=ssize, power=power)
         
         plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using (",input$method,") method"), 
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+          layout(title=paste0("Power analysis using ",input$method," method"), 
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }else if(input$analysisType %in% c("Power") & #input$matrix %in% c("covariance") &
           ### Edland SS ----
@@ -200,9 +213,9 @@ shinyServer(
         }
         dat<-data.frame(n=n, power=pw)
         
-        plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using (",input$method,") method"), 
-            xaxis=list(title="Sample size, group 1"), yaxis=list(title="Power"))
+        plot_ly(data=dat, x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
+          layout(title=paste0("Power analysis using ",input$method," method"), 
+            xaxis=list(title="Sample size, group 1"), yaxis=list(title="Power (%)"))
         
       }else if(input$analysisType %in% c("Sample size") & #input$matrix %in% c("covariance") & 
           ### Liu, Liang Power ----
@@ -213,16 +226,16 @@ shinyServer(
         v = list(v1 = cbind(1,1,t),
           v2 = cbind(1,0,t))
         
-        power<-seq(input$power[1],input$power[2],0.01)
+        power<-seq(input$power[1],input$power[2],1)
         ssize<-rep(0,length(power))
         for(i in 1:length(power)){
           if(input$estimate %in% c("delta")){
             fit<-liu.liang.linear.power(delta=input$delta, u=u, v=v, R=R(), sig.level=input$alpha, 
-              alternative=input$alternative,power=power[i]) 
+              alternative=input$alternative,power=power[i]/100) 
           }else {
             delta<-input$beta*input$pct.change
             fit<-liu.liang.linear.power(delta=delta, u=u, v=v, R=R(), sig.level=input$alpha, 
-              alternative=input$alternative,power=power[i]) 
+              alternative=input$alternative,power=power[i]/100) 
           }
           
           ssize[i]<-fit$N
@@ -230,8 +243,8 @@ shinyServer(
         dat<-data.frame(n=ssize, power=power)
         
         plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using (",input$method,") method"), 
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+          layout(title=paste0("Power analysis using ",input$method," method"), 
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }else if(input$analysisType %in% c("Power") & #input$matrix %in% c("covariance") & 
           ### Liu, Liang SS ----
@@ -258,15 +271,15 @@ shinyServer(
         }
         dat<-data.frame(n=n, power=pw)
         
-        plot_ly(data=dat, x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using (",input$method,") method"), 
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+        plot_ly(data=dat, x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
+          layout(title=paste0("Power analysis using ",input$method," method"), 
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }
       
     })
     
-    ### Describe method ----
+    ## Describe method ----
     output$describeMethod<-renderText({
       if(input$analysisType %in% c("Sample size") & #input$matrix %in% c("covariance") &
           input$method %in% c("diggle")){
@@ -283,7 +296,7 @@ shinyServer(
       }
     })
     
-    ### Summary selection ----
+    ## Summary selection ----
     output$summarySelection<-renderTable({
       if(input$estimate %in% c("delta")){
         if(input$method %in% c("edland")){
@@ -669,29 +682,29 @@ shinyServer(
     ## Output ----
     output$mmrmplot<-renderPlotly({
       if(input$matrixMMRM %in% c("exchangeable") & input$analysisTypeMMRM %in% c("Sample size")){
-        power<-seq(input$powerMMRM[1],input$powerMMRM[2],0.001)
+        power<-seq(input$powerMMRM[1],input$powerMMRM[2],1)
         ssize<-rep(0,length(power))
         for(i in 1:length(power)){
           if(input$estimateMMRM %in% c("delta")){
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
               sigmab = input$sigmabMMRM,
               lambda =input$lambdaMMRM,
-              delta =input$deltaMMRM, power =power[i],
+              delta =input$deltaMMRM, power =power[i]/100,
               sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           } else {
             delta<-input$betaMMRM*input$pct.changeMMRM
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
               sigmab = input$sigmabMMRM,
               lambda =input$lambdaMMRM,
-              delta =delta, power =power[i],
+              delta =delta, power =power[i]/100,
               sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           }
           ssize[i]<-fit$n1+fit$n2
         }
         dat<-data.frame(n=ssize, power=power)
         plot_ly(data=dat[-c(1:2,nrow(dat)),], x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using MMRM"),
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+          layout(title=paste0("Power analysis for MMRM"),
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }else  if(input$matrixMMRM %in% c("exchangeable") & input$analysisTypeMMRM %in% c("Power")){
         n<-seq(input$sampleSizeMMRM[1],input$sampleSizeMMRM[2],1)
@@ -714,34 +727,34 @@ shinyServer(
           pw[i]<-fit$power
         }
         dat<-data.frame(n=n, power=pw)
-        plot_ly(data=dat[-c(1:2,nrow(dat)),], x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using MMRM"),
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+        plot_ly(data=dat[-c(1:2,nrow(dat)),], x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
+          layout(title=paste0("Power analysis for MMRM"),
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }else if(input$matrixMMRM %in% c("general") & input$analysisTypeMMRM %in% c("Sample size")){
-        power<-seq(input$powerMMRM[1],input$powerMMRM[2],0.001)
+        power<-seq(input$powerMMRM[1],input$powerMMRM[2],1)
         ssize<-rep(0,length(power))
         for(i in 1:length(power)){
           if(input$estimateMMRM %in% c("delta")){
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
               sigmab = input$sigmabMMRM,
               lambda =input$lambdaMMRM,
-              delta =input$deltaMMRM, power =power[i],
+              delta =input$deltaMMRM, power =power[i]/100,
               sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           } else {
             delta<-input$betaMMRM*input$pct.changeMMRM
             fit<-power.mmrm(Ra = input$RamatrixMMRM, ra = input$ramatrixMMRM, sigmaa = input$sigmaaMMRM, 
               sigmab = input$sigmabMMRM,
               lambda =input$lambdaMMRM,
-              delta =delta, power =power[i],
+              delta =delta, power =power[i]/100,
               sig.level=input$alphaMMRM, alternative=input$alternativeMMRM)
           }
           ssize[i]<-fit$n1+fit$n2
         }
         dat<-data.frame(n=ssize, power=power)
         plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using MMRM"),
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+          layout(title=paste0("Power analysis for MMRM"),
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }else if(input$matrixMMRM %in% c("general") & input$analysisTypeMMRM %in% c("Power")){
         n<-seq(input$sampleSizeMMRM[1],input$sampleSizeMMRM[2],1)
@@ -764,32 +777,32 @@ shinyServer(
           pw[i]<-fit$power
         }
         dat<-data.frame(n=n, power=pw)
-        plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using MMRM"),
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+        plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
+          layout(title=paste0("Power analysis for MMRM"),
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       } else if(input$matrixMMRM %in% c("ar1")& input$analysisTypeMMRM %in% c("Sample size")){
-        power<-seq(input$powerMMRM[1],input$powerMMRM[2],0.001)
+        power<-seq(input$powerMMRM[1],input$powerMMRM[2],1)
         ssize<-rep(0,length(power))
         for(i in 1:length(power)){
           if(input$estimateMMRM %in% c("delta")){
             fit<-power.mmrm.ar1(rho=input$rhoMMRM, ra=input$ramatrixMMRM, sigmaa=input$sigmaaMMRM, 
               rb = input$rbmatrixMMRM,alternative = input$alternativeMMRM,
-              lambda =input$lambdaMMRM, power = power[i], delta =input$deltaMMRM,
+              lambda =input$lambdaMMRM, power = power[i]/100, delta =input$deltaMMRM,
               sig.level=input$alphaMMRM)
           } else {
             delta<-input$betaMMRM*input$pct.changeMMRM
             fit<-power.mmrm.ar1(rho=input$rhoMMRM, ra=input$ramatrixMMRM, sigmaa=input$sigmaaMMRM, 
               rb = input$rbmatrixMMRM,alternative = input$alternativeMMRM,
-              lambda =input$lambdaMMRM, power = power[i], delta =delta,
+              lambda =input$lambdaMMRM, power = power[i]/100, delta =delta,
               sig.level=input$alphaMMRM)
           }
           ssize[i]<-fit$n1+fit$n2
         }
         dat<-data.frame(n=ssize, power=power)
         plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using MMRM"),
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+          layout(title=paste0("Power analysis for MMRM"),
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       } else if(input$matrixMMRM %in% c("ar1")& input$analysisTypeMMRM %in% c("Power")){
         n<-seq(input$sampleSizeMMRM[1],input$sampleSizeMMRM[2],1)
@@ -810,9 +823,9 @@ shinyServer(
           pw[i]<-fit$power
         }
         dat<-data.frame(n=n, power=pw)
-        plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-          layout(title=paste0("Power analysis using MMRM"),
-            xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+        plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power*100, type = 'scatter', mode = 'lines') %>%
+          layout(title=paste0("Power analysis for MMRM"),
+            xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
         
       }
       
@@ -1009,12 +1022,14 @@ shinyServer(
           subset(LDELTOTAL.bl >= input$logmembbl[1] & LDELTOTAL.bl <= input$logmembbl[2]| LDELTOTAL.bl %in% NA_real_) %>%
           subset(MMSE.bl >= input$mmsebl[1] & MMSE.bl <= input$mmsebl[2]| MMSE.bl %in% NA_real_) %>%
           subset(CDRSB.bl >= input$cdrsbbl[1] & CDRSB.bl <= input$cdrsbbl[2]| CDRSB.bl %in% NA_real_) %>%
-          subset(Years.bl <= input$studyDuration + 0.25| Years.bl %in% NA_real_)%>%
+          subset(Years.bl <= input$studyDuration + 0.25| Years.bl %in% NA_real_) %>%
+          filter(M <=  input$studyDuration*12) %>%
           filter(APOE4 %in% apoe| APOE4 %in% NA_integer_)
         
       }else {
         adni<-adnimerge %>%
-          filter(Years.bl <= input$studyDuration + 0.25 | Years.bl %in% NA_real_)
+          filter(Years.bl <= input$studyDuration + 0.25 | Years.bl %in% NA_real_) %>%
+          filter(M <=  input$studyDuration*12)
         if("AGE" %in% as.character(input$criteria)){
           adni<-adni %>%
             filter(AGE >= input$age[1] & AGE <= input$age[2])
@@ -1088,10 +1103,6 @@ shinyServer(
         label(dat$AV45.bl)<-"AV45.bl"
         
         cov<-paste(a, collapse="+")
-        # selcov<-switch(input$summaryby,
-        #                "Gender"="PTGENDER","Education"="PTEDUCAT",
-        #                "Ethnicity"="PTETHCAT","Race"="PTRACCAT" 
-        #                )
         cov<-paste0("~",cov)
         
         regFormula<- reactive({
@@ -1148,46 +1159,35 @@ shinyServer(
         cov<-paste(input$selectCovariates,collapse = "+")
         m1 <-lmer(formula(paste(input$longout,"~",cov,"+ Years.bl + (Years.bl |RID)")), subdata())
       }
-      # m1 <-lmer(formula(paste(input$longout, "~ Years.bl + (Years.bl |RID)")), subdata())
-      #m1 <- lmer(get(paste(input$longout)) ~ Years.bl + (Years.bl |RID), subdata())
-      t<-sort(unique(round(subdata()$Years.bl,0)))
       
-      # if(input$directionChange %in% c("Decrease")){
-      #   pct.change<-(1-input$pchangeADNI/100)#for decrease
-      # }else{
-      #   pct.change<-(1+input$pchangeADNI/100)#for increase
-      # }
+      t<-seq(0, input$studyDuration, by=input$timeStepADNI)
       
       pct.change<-input$pchangeADNI
-      power<- seq(input$powerADNI[1],input$powerADNI[2],0.01)
+      power<- seq(input$powerADNI[1],input$powerADNI[2],1)
       
       ssize<-rep(0,length(power))
       for(i in 1:length(power)){
         if(input$methodADNI %in% c("edland")){
           fit<-lmmpower(m1, beta=summary(m1)$coef['Years.bl', 'Estimate'], t=t, sig.level=input$alphaADNI, 
-            alternative=input$alternativeADNI, power=power[i], method=as.character(input$methodADNI),
-            pct.change=pct.change, lambda=input$edlandAllocationADNI)
+            alternative=input$alternativeADNI, power=power[i]/100, method=as.character(input$methodADNI),
+            pct.change=pct.change/100, lambda=input$edlandAllocationADNI)
         } else{
           fit<-lmmpower(m1, beta=summary(m1)$coef['Years.bl', 'Estimate'], t=t, sig.level=input$alphaADNI, 
-            alternative=input$alternativeADNI, power=power[i], method=as.character(input$methodADNI),
-            pct.change=pct.change) 
+            alternative=input$alternativeADNI, power=power[i]/100, method=as.character(input$methodADNI),
+            pct.change=pct.change/100) 
         }
         ssize[i]<-fit$n[1]+fit$n[2]
       }
       
       dat<-data.frame(n=ssize, power=power)
       plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-        layout(title=paste0("Power analysis using (",input$methodADNI,") method"),
-          xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
-      #pct.change<-(1+perc/100)#for increase
-      
-      
-      #} 
+        layout(title=paste("Power analysis using", methods[input$methodADNI]),
+          xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
     })
     
     output$describeMethodADNI<-renderText({
       if(input$methodADNI %in% c("diggle")){
-        "Sample size calculation for difference in slopes between two groups using ADNI pilot. See
+        "Sample size calculation for difference in slopes between two groups using ADNI data to estimate pilot parameters. See
           Diggle et al (2002) for parameter definitions and other details."
       }else if(input$methodADNI %in% c("edland")){
         "Sample size/power calculation for a linear mixed model with only random slope 
@@ -1198,23 +1198,37 @@ shinyServer(
       }
     })
     
+    ## summary table ----
     output$summarySelectionADNI<-renderTable({
+      
       if(input$methodADNI %in% c("edland")){
-        a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error:",
-          "Slope or rate of change in the outcome:", "Percentage change in slope", 
-          "Effect size","Allocation ratio"),
+        a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error",
+          "Estimated rate of change in placebo group", 
+          "Effect size (% of placebo group change)", 
+          "Effect size (raw scale)",
+          "Allocation ratio",
+          "Observation times"),
           Value=as.character(c(input$methodADNI,input$alternativeADNI, input$alphaADNI, 
-            slope(), input$pchangeADNI,slope()*input$pchangeADNI/100, 
-            input$edlandAllocationADNI))) 
+            slope(), 
+            input$pchangeADNI,
+            slope()*input$pchangeADNI/100, 
+            input$edlandAllocationADNI,  
+            paste(seq(0, input$studyDuration, by=input$timeStepADNI), collapse=', ')))) 
       }else{
-        a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error:",
-          "Slope or rate of change in the outcome:", "Percentage change in slope",
-          "Effect size"),
-          Value=as.character(c(input$methodADNI,input$alternativeADNI, input$alphaADNI,  
-            slope(), input$pchangeADNI,slope()*input$pchangeADNI/100)))
+        a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error",
+          "Estimated rate of change in placebo group", 
+          "Effect size (% of placebo group change)", 
+          "Effect size (raw scale)",
+          "Observation times"),
+          Value=as.character(c(input$methodADNI,
+            input$alternativeADNI, 
+            input$alphaADNI,
+            slope(), 
+            input$pchangeADNI,
+            slope()*input$pchangeADNI/100,  
+            paste(seq(0, input$studyDuration, by=input$timeStepADNI), collapse=', '))))
       }
     })
-    
     
     # ADNI GENERATOR (MMRM) ----
     output$selectAgeMMRM<-renderUI({
@@ -1357,7 +1371,6 @@ shinyServer(
     subdataMMRM<-reactive({
       a<-c("","AGE","ABETA.bl","APOE4","TAU.bl","DX.bl","TAU/ABETA","AV45.bl","LDELTOTAL.bl",
         "MMSE.bl","CDRSB.bl")
-      
       if(identical(as.character(input$criteriaMMRM), a)){
         if("Positive" %in% as.character(input$APOE4MMRM) & "Negative" %in% as.character(input$APOE4MMRM)){
           apoe<-c(0,1,2)
@@ -1378,11 +1391,13 @@ shinyServer(
           subset(LDELTOTAL.bl >= input$logmembblMMRM[1] & LDELTOTAL.bl <= input$logmembblMMRM[2]| LDELTOTAL.bl %in% NA_real_) %>%
           subset(MMSE.bl >= input$mmseblMMRM[1] & MMSE.bl <= input$mmseblMMRM[2]| MMSE.bl %in% NA_real_) %>%
           subset(CDRSB.bl >= input$cdrsbblMMRM[1] & CDRSB.bl <= input$cdrsbblMMRM[2]| CDRSB.bl %in% NA_real_) %>%
-          subset(Years.bl <= input$studyDurationMMRM + 0.25 | Years.bl %in% NA_real_)%>%
+          subset(Years.bl <= input$studyDurationMMRM + 0.25 | Years.bl %in% NA_real_) %>%
+          filter(M <=  input$studyDurationMMRM*12) %>%
           filter(APOE4 %in% apoe| APOE4 %in% NA_integer_)
       }else {
         adni<-adnimerge %>%
-          filter(Years.bl <= input$studyDurationMMRM + 0.25 | Years.bl %in% NA_real_)
+          filter(Years.bl <= input$studyDurationMMRM + 0.25 | Years.bl %in% NA_real_) %>%
+          filter(M <=  input$studyDurationMMRM*12)
         if("AGE" %in% as.character(input$criteriaMMRM)){
           adni<-adni %>%
             filter(AGE >= input$ageMMRM[1] & AGE <= input$ageMMRM[2]| AGE %in% NA_real_)
@@ -1433,18 +1448,22 @@ shinyServer(
             filter(CDRSB.bl >= input$cdrsbblMMRM[1] & CDRSB.bl <= input$cdrsbblMMRM[2]| CDRSB.bl %in% NA_real_)
         }
       }
-      # adni$t.index <-  as.numeric(factor(adni$VISCODE))
-      # adni$RID<-factor(adni$RID)
+
       adni$VISCODE[adni$VISCODE=="bl"]<-"bl0"
       adni$VISCODE2<-as.numeric(gsub("[^0-9.]", "",  adni$VISCODE))
       
-      # adni<-adnimerge
-      # adni$VISCODE[adni$VISCODE=="bl"]<-"bl0"
-      # adni$VISCODE2<-as.numeric(gsub("[^0-9.]", "",  adni$VISCODE))
-      
       adni$Y <- adni[, input$longoutMMRM]
+      
+      adni <- left_join(
+        adni %>% filter(M==0) %>% select(RID, Y),
+        adni %>% filter(M>0),
+        suffix = c('.bl', ''), 
+        by='RID'
+      )
+      
       adni<-adni %>%
-        filter(!is.na(Y)) %>%
+        mutate(Y.ch = Y-Y.bl) %>%
+        filter(!is.na(Y.ch)) %>%
         mutate(
           Yr = as.factor(M/12),
           t.index=as.numeric(Yr),
@@ -1458,6 +1477,7 @@ shinyServer(
           arrange(Years.bl)
         a<-as.character(input$criteriaMMRM)[-1]
         a[a=="TAU/ABETA"]<-"TAU_ABETARatio"
+
         if("TAU/ABETA" %in% input$criteriaMMRM){
           dat$TAU_ABETARatio<-with(dat, TAU.bl/ABETA.bl)
         }
@@ -1474,11 +1494,11 @@ shinyServer(
           cov<-paste(a, collapse="+")
           cov<-paste0("~",cov)
         })
-        
-        
+
         regFormulaMMRM<- reactive({
           as.formula(paste(input$summarybyMMRM,cov()))
         })
+        
         tbl<-arsenal::tableby(regFormulaMMRM(),data=dat,
           numeric.stats = c("N","Nmiss","range","meansd", "medianq1q3"),
           cat.stats = c("N","Nmiss", "countpct"),
@@ -1490,14 +1510,14 @@ shinyServer(
     modelFitMMRM<-reactive({
       if(input$matrixADNIMMRM %in% c("exchangeable")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), 
+          m1 <- gls(Y.ch ~ Y.bl + Yr, 
             subdataMMRM(),
             na.action = na.omit,
             correlation = corCompSymm(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+")
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")), 
+          m1 <- gls(formula(paste("Y.ch","~",cov,"+ Y.bl + Yr")), 
             subdataMMRM(),
             na.action = na.omit,
             correlation = corCompSymm(form = ~ t.index | RID),
@@ -1506,14 +1526,14 @@ shinyServer(
         
       }else if(input$matrixADNIMMRM %in% c("general")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), 
+          m1 <- gls(Y.ch ~ Y.bl + Yr, 
             subdataMMRM(),
             na.action = na.omit,
             correlation = corSymm(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+") 
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")),
+          m1 <- gls(formula(paste("Y.ch","~",cov,"+ Y.bl + Yr")), 
             subdataMMRM(),
             na.action = na.omit,
             correlation = corSymm(form = ~ t.index | RID),
@@ -1521,12 +1541,13 @@ shinyServer(
         }
       }else if(input$matrixADNIMMRM %in% c("ar1")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), subdataMMRM(),na.action = na.omit,
+          m1 <- gls(Y.ch ~ Y.bl + Yr, 
+            subdataMMRM(),na.action = na.omit,
             correlation = corAR1(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+")
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")), 
+          m1 <- gls(formula(paste("Y.ch","~",cov,"+ Y.bl + Yr")), 
             subdataMMRM(),na.action = na.omit,
             correlation = corAR1(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
@@ -1535,7 +1556,12 @@ shinyServer(
     })
     
     changeMMRM<-reactive({
-      round(summary(modelFitMMRM())$coef[paste0('Yr', as.character(input$studyDurationMMRM))],4)
+      summary(modelFitMMRM())$coef[paste0('Yr', as.character(input$studyDurationMMRM))]
+    })
+
+    sigmaaMMRM<-reactive({
+      WEIGHTS <- coef(modelFitMMRM()$modelStruct$varStruct, unconstrained = FALSE)
+      modelFitMMRM()$sigma  * last(WEIGHTS)
     })
     
     output$modelFitSummaryMMRM<-renderPrint({
@@ -1544,29 +1570,30 @@ shinyServer(
     
     output$indPlotMMRM<-renderPlotly({
       p <- ggplot(data = subdataMMRM(), aes(x = Years.bl, 
-        y = get(input$longoutMMRM), group = RID))+
+        y = Y.ch, group = RID))+
         geom_line(alpha=0.25)+theme_bw()+xlab("Years from baseline")+
-        ylab(as.character(input$longoutMMRM))
+        ylab(paste(as.character(input$longoutMMRM), 'change from baseline'))
       ggplotly(p)
     })
     
     output$plotProfileMMRM<-renderPlotly({
-      p<-ggplot(subdataMMRM(), aes(x=Years.bl,y=get(input$longoutMMRM))) +
+      p<-ggplot(subdataMMRM(), aes(x=Years.bl,y=Y.ch)) +
         geom_point(alpha=0.25) +
         geom_smooth()+theme_bw()+xlab("Years from baseline")+
-        ylab(as.character(input$longoutMMRM))
+        ylab(paste(as.character(input$longoutMMRM), 'change from baseline'))
       ggplotly(p)
     })
     
     output$digglePlotMMRM<-renderPlotly({
       if(input$matrixADNIMMRM %in% c("exchangeable")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), subdataMMRM(),na.action = na.omit,
+          m1 <- gls(Y.ch ~ Y.bl + Yr, 
+            subdataMMRM(),na.action = na.omit,
             correlation = corCompSymm(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+")
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")), 
+          m1 <- gls(formula(paste("Y.ch","~",cov,"+ Y.bl + Yr")), 
             subdataMMRM(),na.action = na.omit,
             correlation = corCompSymm(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
@@ -1574,24 +1601,27 @@ shinyServer(
         
       }else if(input$matrixADNIMMRM %in% c("general")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), subdataMMRM(),na.action = na.omit,
+          m1 <- gls(Y.ch ~ Y.bl + Yr, 
+            subdataMMRM(),na.action = na.omit,
             correlation = corSymm(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+") 
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")),
+          m1 <- gls(formula(paste("Y.ch","~",cov,"+ Y.bl + Yr")), 
             subdataMMRM(),na.action = na.omit,
             correlation = corSymm(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
         }
       }else if(input$matrixADNIMMRM %in% c("ar1")){
         if(is.null(input$selectCovariatesMMRM)){
-          m1 <- gls(formula(paste0(input$longoutMMRM, "~", "Yr")), subdataMMRM(),na.action = na.omit,
+          m1 <- gls(Y.ch ~ Y.bl + Yr, 
+            subdataMMRM(),
+            na.action = na.omit,
             correlation = corAR1(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
         }else{
           cov<-paste(input$selectCovariatesMMRM,collapse = "+")
-          m1 <- gls(formula(paste(input$longoutMMRM,"~",cov,"+ Yr")), 
+          m1 <- gls(formula(paste("Y.ch","~",cov,"+ Y.bl + Yr")), 
             subdataMMRM(),na.action = na.omit,
             correlation = corAR1(form = ~ t.index | RID),
             weights = varIdent(form = ~ 1 | Yr))
@@ -1599,24 +1629,22 @@ shinyServer(
       }
       
       C <- corMatrix(m1$modelStruct$corStruct)[[1]]
-      WEIGHTS <- coef(m1$modelStruct$varStruct, unconstrained = FALSE)
-      sigmaa <- m1$sigma  * last(WEIGHTS)
       ra <- seq(1,input$percRetentionA/100,length=nrow(C))
       rb <- seq(1,input$percRetentionB/100,length=nrow(C))
-      power<- seq(input$powerADNIMMRM[1],input$powerADNIMMRM[2],0.01)
+      power<- seq(input$powerADNIMMRM[1],input$powerADNIMMRM[2],1)
       ssize<-rep(0,length(power))
       delta<-changeMMRM()*input$pchangeADNIMMRM/100
       for(i in 1:length(power)){
-        fit<-power.mmrm(Ra = C, ra = ra, sigmaa = sigmaa, rb=rb,
+        fit<-power.mmrm(Ra = C, ra = ra, sigmaa = sigmaaMMRM(), rb=rb,
           sig.level=input$alphaADNIMMRM,alternative=input$alternativeADNIMMRM, 
-          power=power[i], delta=delta, lambda=input$edlandAllocationADNIMMRM)
+          power=power[i]/100, delta=delta, lambda=input$edlandAllocationADNIMMRM)
         ssize[i]<-fit$n1+fit$n2
       }
       
       dat<-data.frame(n=ssize, power=power)
       plot_ly(data=dat[-c(1:5,nrow(dat)),], x=~n, y=~power, type = 'scatter', mode = 'lines') %>%
-        layout(title=paste0("Power analysis for MMRM with (",input$matrixADNIMMRM,") correlation structure"),
-          xaxis=list(title="Total sample size"), yaxis=list(title="Power"))
+        layout(title=paste0("Power analysis for MMRM with ",input$matrixADNIMMRM," correlation structure"),
+          xaxis=list(title="Total sample size"), yaxis=list(title="Power (%)"))
       #} 
     })
     
@@ -1634,16 +1662,17 @@ shinyServer(
     })
     
     output$summarySelectionADNIMMRM<-renderTable({
-      a<-data.frame(Summary=c("Correlation structure", "Type of test", "Type I error", "Pilot estimate of placebo group change",
+      a<-data.frame(Summary=c("Var-cov structure", "Type of test", "Type I error", 
         "Residual standard deviation at last visit",
+        "Pilot estimate of placebo group change",
         "Effect size (raw scale)", "Effect size (% of placebo change)", "Allocation ratio", "Percent retention in group a",
-        "Percent retention in group b", "Visits times (years)"),
-        Value=as.character(c(input$matrixADNIMMRM,
+        "Percent retention in group b", "Observation times (years)"),
+        Value=as.character(c(varCov[input$matrixADNIMMRM],
           input$alternativeADNIMMRM, 
           input$alphaADNIMMRM,
-          XXXXXX weight * sigma,
-          changeMMRM(),
-          changeMMRM()*input$pchangeADNIMMRM/100, 
+          round(sigmaaMMRM(), 4),
+          round(changeMMRM(), 4),
+          round(changeMMRM()*input$pchangeADNIMMRM/100, 2),
           paste0(input$pchangeADNIMMRM,'%'), 
           input$edlandAllocationADNIMMRM,
           paste0(input$percRetentionA,'%'), 
@@ -1689,9 +1718,9 @@ shinyServer(
                the analysis are also dynamically generated. "),
         tags$b(h3("Data")),
         tags$p("Data used as inputs in the ADNI-based generator of this dashboard were obtained from the Alzheimer's Disease Neuroimaging Initiative
-(ADNI)", tags$a(href="adni.loni.usc.edu","database"),". As such, the investigators within the ADNI contributed to the design
+(ADNI)", tags$a(href="adni.loni.usc.edu","database"), paste0("on ", adniDate, ". As such, the investigators within the ADNI contributed to the design
 and implementation of ADNI and/or provided data but did not participate in the development of this dashboard.
-A complete listing of ADNI investigators can be found at:", 
+A complete listing of ADNI investigators can be found at:"), 
           tags$a(href="http://adni.loni.usc.edu/wp-content/uploads/how_to_apply/ADNI_Acknowledgement_List.pdf",
             "Acknowledgement List"),". The ADNI was launched in 2003 as a public-private
 partnership, led by Principal Investigator Michael W. Weiner, MD. The primary goal of ADNI has been to
@@ -1719,8 +1748,8 @@ progression of mild cognitive impairment (MCI) and early Alzheimer's disease (AD
         tags$b(h3("Authors")),
         tags$p("This shinydashboard is developed by",
           tags$ul(
-            tags$li(tags$strong("Samuel Iddi"),"(PhD), African Population and Health Research Center (APHRC), Nairobi, Kenya"),
-            tags$li(tags$strong("Michael C. Donohue"),"(PhD),  Alzheimer's Therapeutic Research Institute (ATRI) at the Keck School of Medicine of USC, California, USA")
+            tags$li(tags$strong("Samuel Iddi"),"(PhD), Department of Statistics and Actuarial Science, University of Ghana"),
+            tags$li(tags$strong("Michael C. Donohue"),"(PhD),  Alzheimer's Therapeutic Research Institute (ATRI), Keck School of Medicine, University of Southern California")
           ),
           tags$b(h3("Contacts")), 
           tags$p(
@@ -1728,7 +1757,7 @@ progression of mild cognitive impairment (MCI) and early Alzheimer's disease (AD
           ),
           tags$b(h3("Last Update")), 
           tags$p(
-            "14th August, 2020" 
+            adniDate
           ),
           br()
         )

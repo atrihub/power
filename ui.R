@@ -15,25 +15,23 @@ loadingHelper <- function() {
   
 }
 
-
 shinyUI(dashboardPage(skin = 'blue',
   dashboardHeader(title="Power and Sample Size for Longitudinal Study Designs",
     #"Power and Sample Size for Longitudinal Study Designs", 
     titleWidth = 450),
   dashboardSidebar(
     shinyjs::useShinyjs(),
-    
-    #helpText('To get summarise for all sub-Saharan Africa'),
+    # select app section ----
     sidebarMenu(id="design",
       menuItem(HTML("Power Analysis Based on  <br/> Linear Mixed Model (LMM)"),
         menuSubItem(text = HTML("Sample size calculations for <br/> linear mixed models of<br/>  rate of change"),
           tabName = "lmmpower"),
-        menuSubItem(text = HTML("Linear mixed model sample <br/> size calculations (MMRM)"),
+        menuSubItem(text = HTML("Mixed Model Repeated Measures <br/> (MMRM) sample size calculations"),
           tabName = "powermmrm")),
       menuItem(text=HTML('Power Analysis with ADNI-based <br/> pilot estimate generator'),
         menuSubItem(text = HTML("Sample size calculations for <br/> linear mixed models of<br/>  rate of change"), 
           tabName = "lmmpowerADNI"),
-        menuSubItem(text = HTML("Linear mixed model sample <br/> size calculations (MMRM)"), 
+        menuSubItem(text = HTML("Mixed Model Repeated Measures <br/> (MMRM) sample size calculations"), 
           tabName = "powermmrmADNI")),
       menuItem("About", tabName = 'about')
       
@@ -44,6 +42,7 @@ shinyUI(dashboardPage(skin = 'blue',
       ".shiny-output-error { visibility: hidden; }",
       ".shiny-output-error:before { visibility: hidden; }"
     ),
+    # lmm ----
     tabItems(
       tabItem(tabName = "lmmpower",
         fluidRow(
@@ -55,15 +54,15 @@ shinyUI(dashboardPage(skin = 'blue',
                 #numericInput(inputId="sampleSize", label = "Sample size (n)", value = 100, min=30)),
                 sliderInput(inputId="sampleSize", label = "Sample size (n)", min=0, max=5000, value = c(100,1000))),
               column(3,
-                sliderInput("power",label="Power", min=0, max=1, step = 0.01, value = c(0,1))),
+                sliderInput("power",label="Power (%)", min=0, max=100, step = 1, value = c(50,95))),
               column(3,
-                numericInput(inputId = "startTime",label="Start time (in years)", value = 0, min = 0))
+                numericInput(inputId = "startTime",label="Start time (years)", value = 0, min = 0))
             ),
             fluidRow(
               column(3,
-                numericInput(inputId = "entTime",label='End time (in years)', value = 1.5, min=0)),
+                numericInput(inputId = "entTime",label='End time (years)', value = 1.5, min=0)),
               column(3, 
-                numericInput(inputId = "timeStep",label="Time step (in years)",value = 0.5, min=0)),
+                numericInput(inputId = "timeStep",label="Time step (years)",value = 0.5, min=0)),
               column(3,
                 sliderInput("alpha",label="Type I error (sig.level)", min=0, max=1, step = 0.01, value = 0.05)),
               column(3,
@@ -71,9 +70,15 @@ shinyUI(dashboardPage(skin = 'blue',
             ),
             fluidRow(
               column(3,
-                radioButtons(inputId="estimate", label = "Estimate available", choices = list("delta","percent change"), selected = "delta")),
+                radioButtons(inputId="estimate", 
+                  label = "Effect size scale", 
+                  choiceNames = c('Raw scale of the outcome', 'Percent of placebo change'),
+                  choiceValues = c("delta","percent change"),
+                  selected = "delta")),
               column(3,
-                numericInput("beta",label="Pilot estimate of the placebo change (beta)", value=0.5,min = 0, step = 0.5)),
+                numericInput("beta",
+                  label="Pilot estimate of the placebo change (beta)", 
+                  value=0.5, min = 0, step = 0.5)),
               column(3,
                 sliderInput(inputId="pct.change",label="Percent change in the pilot estimate of the parameter of interest (pct.change)",
                   min=0, max = 1, step = 0.01, value = 0.30)),
@@ -98,7 +103,9 @@ shinyUI(dashboardPage(skin = 'blue',
             ),
             fluidRow(
               column(4,
-                radioButtons(inputId="method", label = "Method", choices = list("diggle","liuliang","edland"), selected = "diggle")),
+                radioButtons(inputId="method", label = "Method", 
+                  choiceNames = c("Liu and Liang (1997)", "Diggle et al (2002)", "Edland (2009)"),
+                  choiceValues = c("diggle","liuliang","edland"), selected = "diggle")),
               # column(3,
               #        radioButtons(inputId="matrix", label = "Association structure", choices = list("covariance"), selected = "covariance")),
               
@@ -122,6 +129,7 @@ shinyUI(dashboardPage(skin = 'blue',
             )    
           ))
       ),
+      # mmrm ----
       tabItem(tabName = "powermmrm",
         fluidRow(
           box(status = 'danger', title='Inputs', solidHeader = T,width = 12,
@@ -132,7 +140,7 @@ shinyUI(dashboardPage(skin = 'blue',
                 #numericInput(inputId="sampleSize", label = "Sample size (n)", value = 100, min=30)),
                 sliderInput(inputId="sampleSizeMMRM", label = "Total sample size (N)", min=0, max=2000, value = c(50,100))),
               column(3,
-                sliderInput(inputId = "powerMMRM",label="Power", min=0, max=1, step = 0.01, value = c(0,1))),
+                sliderInput(inputId = "powerMMRM",label="Power (%)", min=0, max=100, step = 1, value = c(50,95))),
               column(3,
                 sliderInput(inputId = "timePoints",label="Number of time pionts", min = 1, max = 50, value = 4))
             ),
@@ -154,9 +162,13 @@ shinyUI(dashboardPage(skin = 'blue',
               column(3,
                 numericInput("rhoMMRM",label="Exchangeable correlation (rho)", value=0.25,min = 0, step = 0.05)),
               column(3,
-                radioButtons(inputId="estimateMMRM", label = "Estimate available", choices = list("delta","percent change"), selected = "delta")),
+                radioButtons(inputId="estimateMMRM", 
+                  label = "Effect size scale", 
+                  choiceNames = c('Raw scale of the outcome', 'Percent of placebo change'),
+                  choiceValues = c("delta","percent change"), 
+                  selected = "delta")),
               column(3,
-                numericInput("betaMMRM",label="Estimate of the placebo effect (beta)", value=0.5,min = 0, step = 0.5))
+                numericInput("betaMMRM", label="Estimate of the placebo change (beta)", value=0.5,min = 0, step = 0.5))
             ),
             fluidRow(
               column(4,
@@ -190,45 +202,40 @@ shinyUI(dashboardPage(skin = 'blue',
             )    
           ))
       ), #tabItem2 end
+      # lmm ADNI ----
       tabItem(tabName = "lmmpowerADNI",
+        ## baseline selections ----
         fluidRow(
           box(status = 'danger', title='Baseline selections', solidHeader = T,width = 12,
             fluidRow(
-              column(12, multiInput("criteria", "Inc/Exc criteria", choices = c("","Age"="AGE","ABETA"="ABETA.bl",
-                "APOE4"="APOE4","TAU"="TAU.bl","Diagnosis"="DX.bl",
-                "TAU/ABETA","AV45"="AV45.bl","Logical Memory"="LDELTOTAL.bl","MMSE"="MMSE.bl","CDRSB"="CDRSB.bl"),
-                selected = c("","Age"="AGE","ABETA"="ABETA.bl",
-                  "APOE4"="APOE4","TAU"="TAU.bl","Diagnosis"="DX.bl",
-                  "TAU/ABETA","AV45"="AV45.bl","Logical Memory"="LDELTOTAL.bl","MMSE"="MMSE.bl","CDRSB"="CDRSB.bl"),
+              column(12, multiInput("criteria", "Inc/Exc criteria", 
+                choiceNames = c("","Age","CSF Aβ42",
+                  "APOE4","CSF Tau","Diagnosis",
+                  "CSF Tau/Aβ42", "AV45 (SUVR)", "Logical Memory", "MMSE", "CDRSB"),
+                choiceValues = c("", "AGE", "ABETA.bl",
+                "APOE4", "TAU.bl", "DX.bl",
+                "TAU/ABETA", "AV45.bl", "LDELTOTAL.bl", "MMSE.bl", "CDRSB.bl"),
+                selected = c("", "AGE", "ABETA.bl",
+                  "APOE4", "TAU.bl", "DX.bl",
+                  "TAU/ABETA", "AV45.bl", "LDELTOTAL.bl", "MMSE.bl", "CDRSB.bl"),
                 options = list(
                   enable_search = T,
                   non_selected_header = "Choose to select:",
                   selected_header = "You have selected:"
                 )),
                 actionButton("submitCriteria","Submit selected criteria"))
-              # column(6, multiInput(inputId = "covariates", "Covariate options", choices = c("","Gender"="PTGENDER","Education"="PTEDUCAT",
-              #                   "Ethnicity"="PTETHCAT", "APOE4"="APOE4","Race"="PTRACCAT"),
-              #         selected = c("","Gender"="PTGENDER","Education"="PTEDUCAT",
-              #                      "Ethnicity"="PTETHCAT", "APOE4"="APOE4","Race"="PTRACCAT"), options = list(
-              #            enable_search = T,
-              #            non_selected_header = "Choose to select:",
-              #            selected_header = "You have selected:"
-              #                                  )),
-              #        actionButton("submitCovariates","Submit selected covariates"))
             )  
           )
         ),
+        ## Inclusion/Exclusion criteria ----
         fluidRow(
-          
           box(status = 'danger', title='Inclusion/Exclusion criteria', solidHeader = T,width = 12,
             fluidRow(
               column(3, uiOutput("selectAge")), column(3, checkboxGroupInput('APOE4', HTML(paste0('APOE4 status (', 
                 tags$em("Do not deselect both"),")")), 
                 choices = c("Positive", "Negative"), selected =c("Positive", "Negative"))),
-              # helpText("You should not deselect both")),
               column(3, uiOutput("selectAV45")),
-              column(3, uiOutput("selectDuration")),
-              
+              column(3, uiOutput("selectDuration"))
             ),
             fluidRow(
               column(4, uiOutput("selectAbeta")),column(4, uiOutput("selectTau")), column(4, uiOutput("selectRatio"))
@@ -239,6 +246,7 @@ shinyUI(dashboardPage(skin = 'blue',
               column(3, uiOutput("selectLogMem"))
             )
           ),
+          ## baseline summary ----
           box(status = 'success', title='Baseline summary', solidHeader = T,width = 12,
             fluidRow(
               column(6, radioButtons(inputId = "summaryby", "Sumarize by", 
@@ -250,18 +258,16 @@ shinyUI(dashboardPage(skin = 'blue',
               column(12, tableOutput("baselineSummary"))
             )
           ),
+          ## covariate options ----
           box(status = 'danger', title='Covariate Options', solidHeader = T,width = 5,
             fluidRow(
-              # column(4, uiOutput("selectGender"),uiOutput("selectEduc")), #column(3, uiOutput("selectEduc")), 
-              # column(4, uiOutput("selectEth"),checkboxGroupInput('APOE42', 'APOE4 status', 
-              #       choices = c("APOE+"=0, "APOE-"=1), selected = c("APOE+"=0, "APOE-"=1))),column(4, uiOutput("selectRace"))
-              # 
               column(12,checkboxGroupInput('selectCovariates', 'Select covariate', 
                 choices = c("Age"="AGE","Gender"="PTGENDER","Education"="PTEDUCAT",
                   "Ethnicity"="PTETHCAT","Race"="PTRACCAT"), 
                 selected = c(""), inline = T))
             )
           ),
+          ## outcome options ----
           box(status = 'danger', title='Outcome Options', solidHeader = T,width = 7,
             fluidRow(
               column(12, radioButtons("longout",label = "Longitudinal Outcomes", 
@@ -270,54 +276,71 @@ shinyUI(dashboardPage(skin = 'blue',
               
             )
           ),
-          box(status = 'success', title='Profile of outcome', solidHeader = T,width = 12,
+          ## Plots of pilot data ----
+          box(status = 'success', title='Plots of pilot data', solidHeader = T,width = 12,
             fluidRow(
               column(6, plotlyOutput("indPlot")),
               column(6, plotlyOutput("plotProfile"))
             )
           ),
-          box(status = 'danger', title='Other Options', solidHeader = T,width = 12,
+          ## Other design options ----
+          box(status = 'danger', title='Other design options', solidHeader = T,width = 12,
             fluidRow(
-              column(4, radioButtons(inputId="methodADNI", label = "Method", choices = list("diggle","liuliang","edland"), 
+              column(4, radioButtons(inputId="methodADNI", label = "Method", 
+                choiceNames = c("Liu and Liang (1997)", "Diggle et al (2002)", "Edland (2009)"),
+                choiceValues = c("diggle","liuliang","edland"), 
                 selected = "diggle", inline =T)),
               column(3, radioButtons(inputId ="alternativeADNI", label="Type of test", 
                 choices = list("two.sided","one.sided"), selected = "two.sided", inline = T)),
               column(5,
-                sliderInput("powerADNI",label="Power", min=0, max=1, step = 0.01, value = c(0,1)))
+                sliderInput("powerADNI",label="Power (%)", min=0, max=100, step = 1, value = c(50,95)))
             ),
             fluidRow(
               column(4,  sliderInput(inputId ="alphaADNI",label="Type I error (sig.level)",
                 min=0, max=1, step = 0.01, value = 0.05)),
               # column(3, radioButtons("directionChange",label = "Direction of change in slope",choices = c("Decrease","Increase"), 
               #                        selected = "Increase", inline = T)),
-              column(4, sliderInput(inputId ="pchangeADNI",label="Percent change",
+              column(4, sliderInput(inputId ="pchangeADNI",label="Effect size (% of estimated placebo slope)",
                 min=0, max=100, value = 75)),
               column(4, sliderInput("edlandAllocationADNI", "Allocation ratio (lambda)", min = 0, max = 5, value = 1))
+            ),
+            fluidRow(
+              column(4,
+                sliderInput("timeStepADNI", label="Time step (years)", min=0.5, max=2, step = 0.5, value = 0.5))
             )
           ),
-          box(status = 'success', title='Output', solidHeader = T,width = 12,
+          ## Power analysis results ----
+          box(status = 'success', title='Power analysis results', solidHeader = T,width = 12,
             fluidRow(
-              column(6, plotlyOutput("digglePlot")), column(6, uiOutput("describeMethodADNI"), 
+              column(6, plotlyOutput("digglePlot")), 
+              column(6, uiOutput("describeMethodADNI"), 
                 tableOutput("summarySelectionADNI"))
             )
           ),
-          box(status = 'success', title='Model fit output', solidHeader = T,width = 12,
+          ## Model fit to pilot data ----
+          box(status = 'success', title='Model fit to pilot data', solidHeader = T,width = 12,
             fluidRow(
               column(12, verbatimTextOutput("modelFitSummary"))
             )
           )
         )
       ), #tabitem3 ends
+      # mmrm ADNI ----
       tabItem(tabName = "powermmrmADNI",
+        ## Baseline selections ----
         fluidRow(
           box(status = 'danger', title='Baseline selections', solidHeader = T,width = 12,
             fluidRow(
-              column(12, multiInput("criteriaMMRM", "Inc/Exc criteria", choices = c("","Age"="AGE","ABETA"="ABETA.bl",
-                "APOE4"="APOE4","TAU"="TAU.bl","Diagnosis"="DX.bl",
-                "TAU/ABETA","AV45"="AV45.bl","Logical Memory"="LDELTOTAL.bl","MMSE"="MMSE.bl","CDRSB"="CDRSB.bl"),
-                selected = c("","Age"="AGE","ABETA"="ABETA.bl",
-                  "APOE4"="APOE4","TAU"="TAU.bl","Diagnosis"="DX.bl",
-                  "TAU/ABETA","AV45"="AV45.bl","Logical Memory"="LDELTOTAL.bl","MMSE"="MMSE.bl","CDRSB"="CDRSB.bl"),
+              column(12, multiInput("criteriaMMRM", "Inc/Exc criteria", 
+                choiceNames = c("","Age","CSF Aβ42",
+                  "APOE4","CSF Tau","Diagnosis",
+                  "CSF Tau/Aβ42", "AV45 (SUVR)", "Logical Memory", "MMSE", "CDRSB"),
+                choiceValues = c("", "AGE", "ABETA.bl",
+                  "APOE4", "TAU.bl", "DX.bl",
+                  "TAU/ABETA", "AV45.bl", "LDELTOTAL.bl", "MMSE.bl", "CDRSB.bl"),
+                selected = c("", "AGE", "ABETA.bl",
+                  "APOE4", "TAU.bl", "DX.bl",
+                  "TAU/ABETA", "AV45.bl", "LDELTOTAL.bl", "MMSE.bl", "CDRSB.bl"),
                 options = list(
                   enable_search = T,
                   non_selected_header = "Choose to select:",
@@ -328,7 +351,7 @@ shinyUI(dashboardPage(skin = 'blue',
           )
         ),
         fluidRow(
-          
+          ## Inclusion/Exclusion criteria ----
           box(status = 'danger', title='Inclusion/Exclusion criteria', solidHeader = T,width = 12,
             fluidRow(
               column(3, uiOutput("selectAgeMMRM")), column(3, checkboxGroupInput('APOE4MMRM', label = HTML(paste0('APOE4 status (', 
@@ -349,6 +372,7 @@ shinyUI(dashboardPage(skin = 'blue',
               column(3, uiOutput("selectLogMemMMRM"))
             )
           ),
+          ## Baseline summary ----
           box(status = 'success', title='Baseline summary', solidHeader = T,width = 12,
             fluidRow(
               column(6, radioButtons(inputId = "summarybyMMRM", "Sumarize by", 
@@ -361,6 +385,7 @@ shinyUI(dashboardPage(skin = 'blue',
               column(12, tableOutput("baselineSummaryMMRM"))
             )
           ),
+          ## Covariate Options ----
           box(status = 'danger', title='Covariate Options', solidHeader = T,width = 5,
             fluidRow(
               # column(4, uiOutput("selectGender"),uiOutput("selectEduc")), #column(3, uiOutput("selectEduc")), 
@@ -373,6 +398,7 @@ shinyUI(dashboardPage(skin = 'blue',
                 selected = c(""), inline = T))
             )
           ),
+          ## Outcome Options ----
           box(status = 'danger', title='Outcome Options', solidHeader = T,width = 7,
             fluidRow(
               column(12, radioButtons("longoutMMRM",label = "Longitudinal Outcomes", 
@@ -381,29 +407,35 @@ shinyUI(dashboardPage(skin = 'blue',
               
             )
           ),
-          box(status = 'success', title='Profile of outcome', solidHeader = T,width = 12,
+          ## Plots of pilot data ----
+          box(status = 'success', title='Plots of pilot data', solidHeader = T,width = 12,
             fluidRow(
               column(6, plotlyOutput("indPlotMMRM")),
               column(6, plotlyOutput("plotProfileMMRM"))
             )
           ),
-          box(status = 'danger', title='Other Options', solidHeader = T,width = 12,
+          ## Other design options ----
+          box(status = 'danger', title='Other design options', solidHeader = T,width = 12,
             fluidRow(
               column(3,
-                radioButtons(inputId="matrixADNIMMRM", label = "Select association structure", 
-                  choices = list("exchangeable","general","ar1"), selected = "exchangeable", 
+                radioButtons(inputId="matrixADNIMMRM", label = "Select var-cov structure", 
+                  choiceNames = c("Compound symmetric, heterogeneous", 
+                    "Unstructured, heterogeneous",
+                    "AR1, heterogeneous"),
+                  choiceValues = c("exchangeable", "general", "ar1"), 
+                  selected = "exchangeable", 
                   inline = T)),
               column(3, radioButtons(inputId ="alternativeADNIMMRM", label="Type of test", 
                 choices = list("two.sided","one.sided"), selected = "two.sided", inline = T)),
               column(3,
-                sliderInput("powerADNIMMRM",label="Power", min=0, max=1, step = 0.01, value = c(0,1))),
+                sliderInput("powerADNIMMRM",label="Power (%)", min=0, max=100, step = 1, value = c(50,95))),
               column(3,  sliderInput(inputId ="alphaADNIMMRM",label="Type I error (sig.level)",
                 min=0, max=1, step = 0.01, value = 0.05))
             ),
             fluidRow(
               # column(3, radioButtons("directionChangeMMRM",label = "Direction of change in slope",choices = c("Decrease","Increase"), 
               #                        selected = "Increase", inline = T)),
-              column(3, sliderInput(inputId ="pchangeADNIMMRM",label="Percent change",
+              column(3, sliderInput(inputId ="pchangeADNIMMRM",label="Effect size (% of estimated placebo change)",
                 min=0, max=100, value = 75)),
               column(3, sliderInput("edlandAllocationADNIMMRM", "Allocation ratio (lambda)", min = 0, max = 5, value = 1)),
               column(3, sliderInput(inputId ="percRetentionA",label="Percent retention in pilot group a (ra)",
@@ -412,13 +444,16 @@ shinyUI(dashboardPage(skin = 'blue',
                 min=0, max=100, value = 80))
             )
           ),
-          box(status = 'success', title='Output', solidHeader = T,width = 12,
+          ## Power analysis results ----
+          box(status = 'success', title='Power analysis results', solidHeader = T,width = 12,
             fluidRow(
-              column(6, plotlyOutput("digglePlotMMRM")), column(6, uiOutput("describeMethodADNIMMRM"), 
-                tableOutput("summarySelectionADNIMMRM"))
+              column(6, plotlyOutput("digglePlotMMRM")), 
+              column(6, uiOutput("describeMethodADNIMMRM"), 
+              tableOutput("summarySelectionADNIMMRM"))
             )
           ),
-          box(status = 'success', title='Model fit output', solidHeader = T,width = 12,
+          ## Model fit to pilot data ----
+          box(status = 'success', title='Model fit to pilot data', solidHeader = T,width = 12,
             fluidRow(
               column(12, verbatimTextOutput("modelFitSummaryMMRM"))
             )
@@ -431,7 +466,6 @@ shinyUI(dashboardPage(skin = 'blue',
             htmlOutput("aboutApp")
           )
         )
-        
       )#tabItem About Ends
     )#tabItems end
   ) #dashboard body end
