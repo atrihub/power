@@ -16,8 +16,7 @@ loadingHelper <- function() {
 }
 
 shinyUI(dashboardPage(skin = 'blue',
-  dashboardHeader(title="Power and Sample Size for Longitudinal Study Designs",
-    #"Power and Sample Size for Longitudinal Study Designs", 
+  dashboardHeader(title="Power & Sample Size for Longitudinal Studies",
     titleWidth = 450),
   dashboardSidebar(
     shinyjs::useShinyjs(),
@@ -101,7 +100,7 @@ shinyUI(dashboardPage(skin = 'blue',
               column(4,
                 radioButtons(inputId="method", label = "Method", 
                   choiceNames = c("Liu and Liang (1997)", "Diggle et al (2002)", "Edland (2009)"),
-                  choiceValues = c("diggle","liuliang","edland"), selected = "diggle")),
+                  choiceValues = c("liuliang","diggle","edland"), selected = "diggle")),
               column(4, sliderInput("edlandAllocation", "Allocation ratio (lambda)", min = 0, max = 5, value = 1))
             )
           )),
@@ -273,7 +272,7 @@ shinyUI(dashboardPage(skin = 'blue',
             fluidRow(
               column(4, radioButtons(inputId="methodADNI", label = "Method", 
                 choiceNames = c("Liu and Liang (1997)", "Diggle et al (2002)", "Edland (2009)"),
-                choiceValues = c("diggle","liuliang","edland"), 
+                choiceValues = c("liuliang","diggle","edland"), 
                 selected = "diggle", inline =T)),
               column(3, radioButtons(inputId ="alternativeADNI", label="Type of test", 
                 choices = list("two.sided","one.sided"), selected = "two.sided", inline = T)),

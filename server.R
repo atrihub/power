@@ -298,28 +298,32 @@ shinyServer(
     output$summarySelection<-renderTable({
       if(input$estimate %in% c("delta")){
         if(input$method %in% c("edland")){
-          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo change",
-            "Change in the estimate of the parameter of interest:", "Allocation ratio"),
-            Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, input$delta,
-              input$edlandAllocation))) 
+          a<-data.frame(Summary=c("Method", "Type of test", "Type I error", "Placebo change",
+            "Effect size", "Allocation ratio", "Observation times"),
+            Value=as.character(c(methods[input$method],input$alternative, input$alpha, input$beta, input$delta,
+              input$edlandAllocation, 
+              paste(seq(input$startTime,input$entTime,input$timeStep), collapse = ', ')))) 
         }else{
-          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo change",
-            "Change in the estimate of the parameter of interest:"),
-            Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, input$delta)))
+          a<-data.frame(Summary=c("Method", "Type of test", "Type I error", "Placebo change",
+            "Effect size", "Observation times"),
+            Value=as.character(c(methods[input$method], input$alternative, 
+              input$alpha, input$beta, input$delta, 
+              paste(seq(input$startTime,input$entTime,input$timeStep), collapse = ', '))))
         }
       } else{
         if(input$method %in% c("edland")){
-          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo change",
-            "Change in the estimate of the parameter of interest:", "Allocation ratio"),
-            Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, 
-              input$beta*input$pct.change,input$edlandAllocation))) 
+          a<-data.frame(Summary=c("Method", "Type of test", "Type I error", "Placebo change",
+            "Effect size", "Allocation ratio", "Observation times"),
+            Value=as.character(c(methods[input$method],input$alternative, input$alpha, input$beta, 
+              input$beta*input$pct.change,input$edlandAllocation, 
+              paste(seq(input$startTime,input$entTime,input$timeStep), collapse = ', ')))) 
         }else{
-          a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error", "Placebo change",
-            "Change in the estimate of the parameter of interest:"),
-            Value=as.character(c(input$method,input$alternative, input$alpha, input$beta, 
-              input$beta*input$pct.change)))
+          a<-data.frame(Summary=c("Method", "Type of test", "Type I error", "Placebo change",
+            "Effect size", "Observation times"),
+            Value=as.character(c(methods[input$method],input$alternative, input$alpha, input$beta, 
+              input$beta*input$pct.change, 
+              paste(seq(input$startTime,input$entTime,input$timeStep), collapse = ', '))))
         }
-        
       }
     })
 
@@ -1197,25 +1201,25 @@ shinyServer(
     output$summarySelectionADNI<-renderTable({
       
       if(input$methodADNI %in% c("edland")){
-        a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error",
+        a<-data.frame(Summary=c("Method", "Type of test", "Type I error",
           "Estimated rate of change in placebo group", 
           "Effect size (% of placebo group change)", 
           "Effect size (raw scale)",
           "Allocation ratio",
           "Observation times"),
-          Value=as.character(c(input$methodADNI,input$alternativeADNI, input$alphaADNI, 
+          Value=as.character(c(methods[input$methodADNI],input$alternativeADNI, input$alphaADNI, 
             slope(), 
             input$pchangeADNI,
             slope()*input$pchangeADNI/100, 
             input$edlandAllocationADNI,  
             paste(seq(0, input$studyDuration, by=input$timeStepADNI), collapse=', ')))) 
       }else{
-        a<-data.frame(Summary=c("Sample size method", "Type of test", "Type I error",
+        a<-data.frame(Summary=c("Method", "Type of test", "Type I error",
           "Estimated rate of change in placebo group", 
           "Effect size (% of placebo group change)", 
           "Effect size (raw scale)",
           "Observation times"),
-          Value=as.character(c(input$methodADNI,
+          Value=as.character(c(methods[input$methodADNI],
             input$alternativeADNI, 
             input$alphaADNI,
             slope(), 
