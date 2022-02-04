@@ -30,7 +30,8 @@ death_color <- "red"
 # 
 # adnimerge <- adnimerge %>%
 #   mutate(across(c(ABETA.bl, TAU.bl), csf2numeric)) %>%
-#   filter(Years.bl <= 5.25)
+#   filter(Years.bl <= 5.25) %>%
+#   select(!c(EXAMDATE, EXAMDATE.bl, PTID, COLPROT, ORIGPROT))
 # 
 # save(adnimerge, adniDate, file="ADNIMERGE.rdata")
 
